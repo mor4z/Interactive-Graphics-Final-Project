@@ -128,14 +128,14 @@ function animate() {
         shootDebounce = false; 
     }
 
-    weaponSystem.update(physics.currentGravity, deltaTime);
+    weaponSystem.update(physics.currentGravity, deltaTime, world.getObstacleBoxes());
 
     // Update solar system orbit matrix calculations
     dayNightSystem.update(deltaTime, player.group.position, camera);
 
     // EXTRACTION: Calculate how high the sun is relative to its track center (normalized value between -1.0 and 1.0)
-// We check the sun's actual Y offset position minus player anchor height, then divide by orbit height scaling profiles
-const sunNormalizedY = (dayNightSystem.sunGroup.position.y - player.group.position.y) / 450;
+    // We check the sun's actual Y offset position minus player anchor height, then divide by orbit height scaling profiles
+    const sunNormalizedY = (dayNightSystem.sunGroup.position.y - player.group.position.y) / 450;
 
     // Keep the procedural star skybox center locked dynamically onto the player tracking coordinates
     skyboxManager.update(player.group.position, deltaTime, sunNormalizedY);

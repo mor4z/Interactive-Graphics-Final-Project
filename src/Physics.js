@@ -13,14 +13,15 @@ export class Physics {
             neptune: 11.15
         };
 
+        // Start on Earth by default, but the player can switch to any planet's gravity
         this.currentGravity = this.gravities.earth;
         this.playerVelocityY = 0;
         this.isGrounded = true;
 
         // CONSTANT MUSCULAR FORCE: The astronaut always pushes off the ground 
-    // with a constant initial vertical velocity (in m/s).
-    // 4.2 m/s corresponds to a realistic ~0.9 meter high jump on Earth.
-    this.constantJumpLaunchVelocity = 4.2;
+        // with a constant initial vertical velocity (in m/s).
+        // 4.2 m/s corresponds to a realistic ~0.9 meter high jump on Earth.
+        this.constantJumpLaunchVelocity = 4.2;
 
         // Ground reference: the player's group/camera origin sits this many meters
         // above the feet when standing. Shared by updateGravity() and the collision
