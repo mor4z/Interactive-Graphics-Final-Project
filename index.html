@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Space Valley</title>
+    <link rel="stylesheet" href="styles.css">
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+          "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/20.0.0/tween.umd.js"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        /* ============================================================
+           SPACE VALLEY WELCOME SCREEN
+           Scoped under #welcome-screen / .planet-card / etc. so it can't
+           collide with rules already in styles.css. Doesn't touch
+           #ui-container - that panel is left exactly as it was, since
+           Physics.js already uses its #planet-select live, during play,
+           to let you switch planet on the fly.
+           ============================================================ */
+        :root {
+            --wv-void: #05060a;
+            --wv-panel: rgba(12, 15, 24, 0.72);
+            --wv-line: rgba(255, 255, 255, 0.10);
+            --wv-text: #eef1f8;
+            --wv-text-dim: #8891a7;
+            --wv-accent: #3e76b0; /* default: Earth */
+            --wv-accent-soft: rgba(62, 118, 176, 0.35);
+        }
+
+        #welcome-screen, #welcome-screen * { box-sizing: border-box; }
+
+        body.wv-lock { overflow: hidden; }
+
+        #wv-starfield {
+            position: fixed;
+            inset: 0;
+            z-index: 499;
+            pointer-events: none;
+            background-image:
+                radial-gradient(1.5px 1.5px at 20% 30%, #fff, transparent),
+                radial-gradient(1px 1px at 65% 12%, #fff, transparent),
+                radial-gradient(1.5px 1.5px at 80% 65%, #fff, transparent),
+                radial-gradient(1px 1px at 40% 80%, #fff, transparent),
+                radial-gradient(1px 1px at 90% 40%, #fff, transparent),
+                radial-gradient(1.5px 1.5px at 10% 60%, #fff, transparent),
+                radial-gradient(1px 1px at 55% 50%, #fff, transparent);
+            opacity: 0.5;
+            animation: wv-twinkle 6s ease-in-out infinite;
+        }
+
+        @keyframes wv-twinkle {
+            0%, 100% { opacity: 0.35; }
+            50% { opacity: 0.7; }
+        }
+
+        #wv-backdrop {
+            position: fixed;
+            inset: 0;
+            z-index: 498;
+            pointer-events: none;
+            background: radial-gradient(ellipse 60% 50% at 50% 30%, var(--wv-accent-soft), transparent 70%);
+            transition: background 0.6s ease;
+        }
+
+        #welcome-screen {
+            position: fixed;
+            inset: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 5vh 5vw;
+            background: var(--wv-void);
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            color: var(--wv-text);
+            transition: opacity 0.5s ease;
+        }
+
+        #welcome-screen.wv-hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .wv-panel {
+            width: min(880px, 100%);
+            max-height: 92vh;
+            overflow-y: auto;
+            background: var(--wv-panel);
+            border: 1px solid var(--wv-line);
+            border-radius: 18px;
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            padding: 40px 44px 32px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+            animation: wv-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes wv-rise {
+            from { opacity: 0; transform: translateY(18px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        .wv-eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12px;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--wv-text-dim);
+            margin: 0 0 10px;
+        }
+
+        #welcome-screen h1 {
+            font-size: clamp(38px, 6vw, 58px);
+            font-weight: 700;
+            letter-spacing: 0.01em;
+            line-height: 1;
+            margin: 0 0 14px;
+            color: var(--wv-text);
+        }
+
+        .wv-accent-bar {
+            width: 64px;
+            height: 4px;
+            border-radius: 2px;
+            background: var(--wv-accent);
+            box-shadow: 0 0 16px var(--wv-accent);
+            margin: 0 0 18px;
+            transition: background 0.6s ease, box-shadow 0.6s ease;
+        }
+
+        .wv-intro {
+            color: var(--wv-text-dim);
+            font-size: 15px;
+            line-height: 1.6;
+            max-width: 60ch;
+            margin: 0 0 28px;
+        }
+
+        .wv-intro strong { color: var(--wv-text); font-weight: 500; }
+
+        .wv-section-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--wv-text-dim);
+            margin: 0 0 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .wv-section-label::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--wv-line);
+        }
+
+        .wv-planet-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 26px;
+        }
+
+        @media (max-width: 640px) {
+            .wv-planet-grid { grid-template-columns: repeat(2, 1fr); }
+            .wv-panel { padding: 28px 22px 24px; }
+        }
+
+        .wv-planet-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 6px;
+            text-align: left;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--wv-line);
+            border-radius: 12px;
+            padding: 13px 14px;
+            cursor: pointer;
+            color: var(--wv-text);
+            font-family: inherit;
+            transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+        }
+
+        .wv-planet-card:hover {
+            border-color: rgba(255, 255, 255, 0.28);
+            transform: translateY(-2px);
+        }
+
+        .wv-planet-card:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
+        .wv-planet-card.wv-active {
+            background: rgba(255, 255, 255, 0.07);
+            border-color: var(--wv-card-color);
+            box-shadow: 0 0 0 1px var(--wv-card-color), 0 0 22px -4px var(--wv-card-color);
+        }
+
+        .wv-orb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--wv-card-color);
+            box-shadow: 0 0 10px var(--wv-card-color);
+            flex-shrink: 0;
+        }
+
+        .wv-planet-name { font-weight: 500; font-size: 15px; }
+
+        .wv-planet-gravity {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11.5px;
+            color: var(--wv-text-dim);
+        }
+
+        .wv-planet-flavor {
+            font-size: 11.5px;
+            color: var(--wv-text-dim);
+            line-height: 1.35;
+            margin-top: 2px;
+        }
+
+        .wv-controls-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+
+        .wv-control-item {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12.5px;
+            color: var(--wv-text-dim);
+        }
+
+        .wv-control-item kbd {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 11px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--wv-line);
+            border-bottom-width: 2px;
+            border-radius: 5px;
+            padding: 3px 7px;
+            color: var(--wv-text);
+        }
+
+        #wv-start-btn {
+            width: 100%;
+            padding: 15px;
+            font-family: inherit;
+            font-size: 15px;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            color: #05060a;
+            background: var(--wv-accent);
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: background 0.6s ease, filter 0.15s ease, transform 0.1s ease;
+        }
+
+        #wv-start-btn:hover { filter: brightness(1.08); }
+        #wv-start-btn:active { transform: scale(0.99); }
+
+        #wv-pointer-hint {
+            position: fixed;
+            top: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 900;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 12.5px;
+            letter-spacing: 0.03em;
+            color: var(--wv-text);
+            background: rgba(12, 15, 24, 0.75);
+            border: 1px solid var(--wv-line);
+            padding: 9px 16px;
+            border-radius: 999px;
+            backdrop-filter: blur(10px);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        #wv-pointer-hint.wv-visible { opacity: 1; }
+
+        /* #ui-container already sits in the DOM; restyle it to match the same
+           dark glass panel / typography language as the welcome screen, so
+           the in-game HUD doesn't look like a leftover browser <select>. */
+        #ui-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            background: var(--wv-panel);
+            border: 1px solid var(--wv-line);
+            border-radius: 12px;
+            padding: 12px 16px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+            font-family: 'Space Grotesk', system-ui, sans-serif;
+            color: var(--wv-text);
+        }
+
+        #ui-container label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10.5px;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: var(--wv-text-dim);
+        }
+
+        #ui-orb {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: var(--wv-accent);
+            box-shadow: 0 0 8px var(--wv-accent);
+            flex-shrink: 0;
+            transition: background 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        #ui-container select {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            background: rgba(255, 255, 255, 0.05);
+            color: var(--wv-text);
+            border: 1px solid var(--wv-line);
+            border-radius: 8px;
+            padding: 7px 10px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        #ui-container select:focus-visible {
+            outline: 2px solid #fff;
+            outline-offset: 2px;
+        }
+
+        #ui-container select option {
+            background: #0c0f18;
+            color: var(--wv-text);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            #wv-starfield { animation: none; }
+            .wv-panel { animation: none; }
+            #welcome-screen * { transition-duration: 0.01ms !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="wv-starfield"></div>
+    <div id="wv-backdrop"></div>
+
+    <div id="welcome-screen">
+        <div class="wv-panel">
+            <p class="wv-eyebrow">Orbital Navigation System</p>
+            <h1>SPACE VALLEY</h1>
+            <div class="wv-accent-bar" id="wv-accent-bar"></div>
+            <p class="wv-intro">
+                Welcome to <strong>Space Valley</strong>. Every planet has its own real-world
+                gravity: it changes how you walk, jump, and throw objects. Choose where to
+                land &mdash; you can still switch planets once the mission is underway.
+            </p>
+
+            <p class="wv-section-label">Destination</p>
+            <div class="wv-planet-grid" id="wv-planet-grid">
+                <!-- Gravity values (m/s²) mirror Physics.js -> this.gravities.
+                     Colors are the planets' real approximate hues, used purely
+                     for card identity (independent of the in-game sky/fog tints
+                     in SkyboxManager.js / World.js). -->
+                <button class="wv-planet-card" data-planet="mercury" style="--wv-card-color:#f0dfae" type="button" aria-pressed="false">
+                    <span class="wv-orb"></span>
+                    <span class="wv-planet-name">Mercury</span>
+                    <span class="wv-planet-gravity">3.70 m/s² · 0.38&times; g</span>
+                    <span class="wv-planet-flavor">Long strides under a merciless sun.</span>
+                </button>
+                <button class="wv-planet-card" data-planet="venus" style="--wv-card-color:#c77b3d" type="button" aria-pressed="false">
+                    <span class="wv-orb"></span>
+                    <span class="wv-planet-name">Venus</span>
+                    <span class="wv-planet-gravity">8.87 m/s² · 0.90&times; g</span>
+                    <span class="wv-planet-flavor">Near-Earth gravity, a crushing atmosphere.</span>
+                </button>
+                <button class="wv-planet-card wv-active" data-planet="earth" style="--wv-card-color:#3e76b0" type="button" aria-pressed="true">
+                    <span class="wv-orb"></span>
+                    <span class="wv-planet-name">Earth</span>
+                    <span class="wv-planet-gravity">9.81 m/s² · 1.00&times; g</span>
+                    <span class="wv-planet-flavor">Home. The baseline.</span>
+                </button>
+                <button class="wv-planet-card" data-planet="moon" style="--wv-card-color:#c9cdd6" type="button" aria-pressed="false">
+                    <span class="wv-orb"></span>
+                    <span class="wv-planet-name">Moon</span>
+                    <span class="wv-planet-gravity">1.62 m/s² · 0.17&times; g</span>
+                    <span class="wv-planet-flavor">Huge leaps &mdash; every step is almost a flight.</span>
+                </button>
+                <button class="wv-planet-card" data-planet="mars" style="--wv-card-color:#b5533c" type="button" aria-pressed="false">
+                    <span class="wv-orb"></span>
+                    <span class="wv-planet-name">Mars</span>
+                    <span class="wv-planet-gravity">3.71 m/s² · 0.38&times; g</span>
+                    <span class="wv-planet-flavor">The red planet: light, sweeping strides.</span>
+                </button>
+                <button class="wv-planet-card" data-planet="jupiter" style="--wv-card-color:#d9a15b" type="button" aria-pressed="false">
+                    <span class="wv-orb"></span>
+                    <span class="wv-planet-name">Jupiter</span>
+                    <span class="wv-planet-gravity">24.79 m/s² · 2.53&times; g</span>
+                    <span class="wv-planet-flavor">Gas giant: every move weighs three times as much.</span>
+                </button>
+                <button class="wv-planet-card" data-planet="saturn" style="--wv-card-color:#e0c989" type="button" aria-pressed="false">
+                    <span class="wv-orb"></span>
+                    <span class="wv-planet-name">Saturn</span>
+                    <span class="wv-planet-gravity">10.44 m/s² · 1.06&times; g</span>
+                    <span class="wv-planet-flavor">Majestic rings, an almost-familiar gait.</span>
+                </button>
+                <button class="wv-planet-card" data-planet="uranus" style="--wv-card-color:#7fd8e0" type="button" aria-pressed="false">
+                    <span class="wv-orb"></span>
+                    <span class="wv-planet-name">Uranus</span>
+                    <span class="wv-planet-gravity">8.69 m/s² · 0.89&times; g</span>
+                    <span class="wv-planet-flavor">Ice giant, a near-Earth stride.</span>
+                </button>
+                <button class="wv-planet-card" data-planet="neptune" style="--wv-card-color:#3a5fcc" type="button" aria-pressed="false">
+                    <span class="wv-orb"></span>
+                    <span class="wv-planet-name">Neptune</span>
+                    <span class="wv-planet-gravity">11.15 m/s² · 1.14&times; g</span>
+                    <span class="wv-planet-flavor">Supersonic winds, a slightly slower step.</span>
+                </button>
+            </div>
+
+            <p class="wv-section-label">Controls</p>
+            <div class="wv-controls-row">
+                <span class="wv-control-item"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
+                <span class="wv-control-item">Mouse look</span>
+                <span class="wv-control-item"><kbd>Space</kbd> jump</span>
+                <span class="wv-control-item"><kbd>V</kbd> toggle view</span>
+                <span class="wv-control-item"><kbd>F</kbd> throw</span>
+            </div>
+
+            <button id="wv-start-btn" type="button">Launch Mission &rarr;</button>
+        </div>
+    </div>
+
+    <div id="wv-pointer-hint">Click the screen to look around</div>
+
+    <div id="ui-container">
+    <label for="planet-select"><span id="ui-orb"></span>Destination</label>
+    <select id="planet-select">
+        <option value="mercury">Mercury (3.70 m/s²)</option>
+        <option value="venus">Venus (8.87 m/s²)</option>
+        <option value="earth" selected>Earth (9.81 m/s²)</option>
+        <option value="moon">Moon (1.62 m/s²)</option>
+        <option value="mars">Mars (3.71 m/s²)</option>
+        <option value="jupiter">Jupiter (24.79 m/s²)</option>
+        <option value="saturn">Saturn (10.44 m/s²)</option>
+        <option value="uranus">Uranus (8.69 m/s²)</option>
+        <option value="neptune">Neptune (11.15 m/s²)</option>
+    </select>
+</div>
+
+    <script>
+        // Drives the welcome screen's planet cards. Deliberately reuses the
+        // SAME #planet-select that Physics.js already listens to (for live,
+        // in-game planet switching) instead of creating a second one - the
+        // cards below are just a nicer front-end for that one select.
+        (function () {
+            document.body.classList.add('wv-lock');
+
+            const cards = document.querySelectorAll('.wv-planet-card');
+            const select = document.getElementById('planet-select');
+            const startBtn = document.getElementById('wv-start-btn');
+            const welcomeScreen = document.getElementById('welcome-screen');
+            const pointerHint = document.getElementById('wv-pointer-hint');
+            const uiOrb = document.getElementById('ui-orb');
+
+            // Same palette as the welcome cards' --wv-card-color, kept here too so
+            // the in-game HUD's color dot matches whichever planet is picked,
+            // including if it's changed later via #ui-container mid-mission.
+            const planetColors = {
+                mercury: '#f0dfae', venus: '#c77b3d', earth: '#3e76b0',
+                moon: '#c9cdd6', mars: '#b5533c', jupiter: '#d9a15b',
+                saturn: '#e0c989', uranus: '#7fd8e0', neptune: '#3a5fcc'
+            };
+
+            let selectedPlanet = select ? select.value : 'earth';
+
+            function applyAccent(color) {
+                document.documentElement.style.setProperty('--wv-accent', color);
+                document.documentElement.style.setProperty('--wv-accent-soft', color + '59'); // ~35% alpha
+            }
+
+            function selectPlanet(card) {
+                cards.forEach(c => { c.classList.remove('wv-active'); c.setAttribute('aria-pressed', 'false'); });
+                card.classList.add('wv-active');
+                card.setAttribute('aria-pressed', 'true');
+                selectedPlanet = card.dataset.planet;
+                applyAccent(planetColors[selectedPlanet] || planetColors.earth);
+            }
+
+            cards.forEach(card => {
+                card.addEventListener('click', () => selectPlanet(card));
+            });
+
+            // Keep the HUD's color dot in sync with the select, whether it changes
+            // because Launch Mission was pressed or because the player picked a new
+            // planet later from #ui-container mid-game.
+            if (select && uiOrb) {
+                select.addEventListener('change', (e) => {
+                    applyAccent(planetColors[e.target.value] || planetColors.earth);
+                });
+            }
+
+            // Only fire the real 'change' event once the player commits, so
+            // browsing planets here doesn't repeatedly trigger texture/theme
+            // reloads in World.js and SkyboxManager.js.
+            startBtn.addEventListener('click', () => {
+                if (select) {
+                    select.value = selectedPlanet;
+                    select.dispatchEvent(new Event('change'));
+                }
+
+                welcomeScreen.classList.add('wv-hidden');
+                document.body.classList.remove('wv-lock');
+                setTimeout(() => { welcomeScreen.style.display = 'none'; }, 550);
+
+                pointerHint.classList.add('wv-visible');
+                document.addEventListener('pointerlockchange', () => {
+                    if (document.pointerLockElement) {
+                        pointerHint.classList.remove('wv-visible');
+                    }
+                });
+                setTimeout(() => pointerHint.classList.remove('wv-visible'), 6000);
+            });
+        })();
+    </script>
+
+    <script type="module" src="./src/main.js"></script>
+</body>
+</html>
