@@ -149,7 +149,7 @@ function animate() {
         viewDebounce = false;
     }
 
-    cameraManager.update(player.group.position, yaw, pitch);
+    cameraManager.update(player.group.position, yaw, pitch, world.getObstacleBoxes());
     player.updateFirstPersonVisibility(cameraManager.isFirstPerson);
     // Pass the current planet's gravity ratio so the walk cycle (cadence, stride
     // length, low-gravity bounce) reflects wherever the player currently is.
@@ -164,6 +164,5 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
-
 
 window.onload = init;
