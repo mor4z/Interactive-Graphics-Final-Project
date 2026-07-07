@@ -118,7 +118,8 @@ function animate() {
         if (!shootDebounce) {
             const throwDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
             const spawnPosition = player.group.position.clone();
-            spawnPosition.y += 0.4; 
+            spawnPosition.y -= 0.2;
+            spawnPosition.x += 0.65; 
 
             weaponSystem.spawnProjectile(spawnPosition, throwDirection);
             player.triggerThrowAnimation(); 
@@ -164,5 +165,7 @@ function onWindowResize() {
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
+
+
 
 window.onload = init;
