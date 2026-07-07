@@ -8,7 +8,7 @@ export class CameraManager {
         // Target offsets relative to the player position
         // First Person: right at eye level
         this.fpOffset = new THREE.Vector3(0, 0.5, -0.5);
-        
+
         // Third Person: behind (+Z) and above (+Y)
         // We look down towards the character
         this.tpOffset = new THREE.Vector3(0, 2.5, 5.5);
@@ -30,45 +30,24 @@ export class CameraManager {
             this.camera.rotation.set(pitch, yaw, 0, 'YXZ');
         } else {
             const radius = 6.0;
-            const baseHeight = 2.5;
+            const height = 2.5;
 
-            // How close to true ground level (world y=0) the orbiting camera is
-            // allowed to get before we stop it from sinking further.
-            const minGroundClearance = 0.4;
+            // --- Clamp  pitch BEFORE to compute offset
+            
+            const minGroundY = playerPosition.y + 0.4; 
+            const minOffsetY = minGroundY - playerPosition.y;
+            const minPitch = Math.asin(THREE.MathUtils.clamp(minOffsetY / radius, -1, 1));
+            const clampedPitch = Math.max(pitch, minPitch);
 
-            // Solve for the maximum pitch (looking-up angle) that still keeps the
-            // camera at or above minGroundClearance:
-            //   cameraWorldY = playerPosition.y + baseHeight - radius*sin(pitch)
-            //   playerPosition.y + baseHeight - radius*sin(pitch) >= minGroundClearance
-            //   => sin(pitch) <= (playerPosition.y + baseHeight - minGroundClearance) / radius
-            // This is recomputed every frame from the player's current height, so if
-            // the player is standing on top of an obstacle (higher ground), the
-            // allowed look-up angle automatically adjusts instead of using a fixed
-            // constant that would be wrong at different elevations.
-            const maxSinPitch = (playerPosition.y + baseHeight - minGroundClearance) / radius;
-            const maxUpPitch = Math.asin(THREE.MathUtils.clamp(maxSinPitch, -1, 1));
-
-            // Clamp ONLY the pitch value used here for the orbit math - this does not
-            // touch mouseControls.pitch itself, so raw mouse tracking, first-person
-            // view, and the throw direction (computed elsewhere from camera.quaternion)
-            // are unaffected. It simply stops the third-person camera's vertical orbit
-            // from continuing past the point where it would go below ground, so the
-            // camera feels like it "hits" the terrain at that angle instead of clipping
-            // through it, and moving the mouse further up has no additional effect
-            // until you look back down.
-            const clampedPitch = Math.min(pitch, maxUpPitch);
-
-            const horizontalDist = radius * Math.cos(clampedPitch);
-            const verticalShift = radius * Math.sin(clampedPitch);
-
-            const offsetX = Math.sin(yaw) * horizontalDist;
-            const offsetZ = Math.cos(yaw) * horizontalDist;
-            const offsetY = baseHeight - verticalShift;
-
+            const offsetX = Math.sin(yaw) * Math.cos(clampedPitch) * radius;
+            const offsetZ = Math.cos(yaw) * Math.cos(clampedPitch) * radius;
+            const offsetY = Math.sin(clampedPitch) * radius;
             const targetCamPos = playerPosition.clone().add(new THREE.Vector3(offsetX, offsetY, offsetZ));
 
-            const pivotOrigin = playerPosition.clone().add(new THREE.Vector3(0, baseHeight, 0));
+            const pivotOrigin = playerPosition.clone().add(new THREE.Vector3(0, height, 0));
+
             const safeCamPos = this.resolveCameraCollision(pivotOrigin, targetCamPos, obstacles, yaw, clampedPitch, 0.3);
+
             this.camera.position.copy(safeCamPos);
 
             const lookAtTarget = playerPosition.clone().add(new THREE.Vector3(0, -0.2, 0));
@@ -76,39 +55,7 @@ export class CameraManager {
         }
     }
 
-    // Raycasts from `origin` toward `desiredPosition` against the world's static
-    // obstacle boxes. If something is hit before reaching the desired point, the
-    // camera is stopped short of it (minus `buffer`) instead of clipping through
-    // or into the geometry. This is what keeps the camera always showing the
-    // obstacle's surface rather than passing beyond it.
-    resolveCameraCollision(origin, desiredPosition, obstacles, buffer = 0.3) {
-        if (!obstacles || obstacles.length === 0) return desiredPosition;
-
-        const direction = new THREE.Vector3().subVectors(desiredPosition, origin);
-        const fullDistance = direction.length();
-        if (fullDistance === 0) return desiredPosition;
-
-        direction.normalize();
-        const ray = new THREE.Ray(origin, direction);
-        const hitPoint = new THREE.Vector3();
-
-        let closestDistance = fullDistance;
-
-        for (const box of obstacles) {
-            const intersection = ray.intersectBox(box, hitPoint);
-            if (intersection) {
-                const dist = origin.distanceTo(intersection);
-                if (dist < closestDistance) {
-                    closestDistance = dist;
-                }
-            }
-        }
-
-        const safeDistance = Math.max(0, closestDistance - buffer);
-        return origin.clone().add(direction.multiplyScalar(safeDistance));
-    }
-
-    // FIXED: Computes the 4 corner points of the camera's near plane in world space, given
+    // Computes the 4 corner points of the camera's near plane in world space, given
     // where the camera would be positioned and which way it's looking. Testing
     // collision only against the camera's center point (a single ray) ignores the
     // fact that the camera actually "sees" a rectangle at the near plane - so an
@@ -140,7 +87,7 @@ export class CameraManager {
         ];
     }
 
-    //  FIXED: Raycasts from `origin` toward `desiredPosition`, AND toward each of the
+    // Raycasts from `origin` toward `desiredPosition`, AND toward each of the
     // camera's near-plane corners at that same desired position, against the
     // world's obstacle boxes. Takes the closest hit distance across all of them,
     // so an obstacle clipping into the edge of the view (not just the exact
