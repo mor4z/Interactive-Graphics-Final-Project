@@ -30,14 +30,45 @@ export class CameraManager {
             this.camera.rotation.set(pitch, yaw, 0, 'YXZ');
         } else {
             const radius = 6.0;
-            const height = 2.5;
+            const baseHeight = 2.5;
 
-            const offsetX = Math.sin(yaw) * radius;
-            const offsetZ = Math.cos(yaw) * radius;
-            const targetCamPos = playerPosition.clone().add(new THREE.Vector3(offsetX, height, offsetZ));
+            // How close to true ground level (world y=0) the orbiting camera is
+            // allowed to get before we stop it from sinking further.
+            const minGroundClearance = 0.4;
 
-            const pivotOrigin = playerPosition.clone().add(new THREE.Vector3(0, height, 0));
-            const safeCamPos = this.resolveCameraCollision(pivotOrigin, targetCamPos, obstacles, yaw, pitch, 0.3);
+            // Solve for the maximum pitch (looking-up angle) that still keeps the
+            // camera at or above minGroundClearance:
+            //   cameraWorldY = playerPosition.y + baseHeight - radius*sin(pitch)
+            //   playerPosition.y + baseHeight - radius*sin(pitch) >= minGroundClearance
+            //   => sin(pitch) <= (playerPosition.y + baseHeight - minGroundClearance) / radius
+            // This is recomputed every frame from the player's current height, so if
+            // the player is standing on top of an obstacle (higher ground), the
+            // allowed look-up angle automatically adjusts instead of using a fixed
+            // constant that would be wrong at different elevations.
+            const maxSinPitch = (playerPosition.y + baseHeight - minGroundClearance) / radius;
+            const maxUpPitch = Math.asin(THREE.MathUtils.clamp(maxSinPitch, -1, 1));
+
+            // Clamp ONLY the pitch value used here for the orbit math - this does not
+            // touch mouseControls.pitch itself, so raw mouse tracking, first-person
+            // view, and the throw direction (computed elsewhere from camera.quaternion)
+            // are unaffected. It simply stops the third-person camera's vertical orbit
+            // from continuing past the point where it would go below ground, so the
+            // camera feels like it "hits" the terrain at that angle instead of clipping
+            // through it, and moving the mouse further up has no additional effect
+            // until you look back down.
+            const clampedPitch = Math.min(pitch, maxUpPitch);
+
+            const horizontalDist = radius * Math.cos(clampedPitch);
+            const verticalShift = radius * Math.sin(clampedPitch);
+
+            const offsetX = Math.sin(yaw) * horizontalDist;
+            const offsetZ = Math.cos(yaw) * horizontalDist;
+            const offsetY = baseHeight - verticalShift;
+
+            const targetCamPos = playerPosition.clone().add(new THREE.Vector3(offsetX, offsetY, offsetZ));
+
+            const pivotOrigin = playerPosition.clone().add(new THREE.Vector3(0, baseHeight, 0));
+            const safeCamPos = this.resolveCameraCollision(pivotOrigin, targetCamPos, obstacles, yaw, clampedPitch, 0.3);
             this.camera.position.copy(safeCamPos);
 
             const lookAtTarget = playerPosition.clone().add(new THREE.Vector3(0, -0.2, 0));

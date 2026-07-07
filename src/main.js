@@ -116,10 +116,21 @@ function animate() {
 
     if (input.keys.shoot) {
         if (!shootDebounce) {
-            const throwDirection = new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
+            const isWalkingTowardCameraInThirdPerson =
+                !cameraManager.isFirstPerson && input.keys.backward;
+
+            // FIX: previously this used camera.quaternion, which in third person also
+            // carries the camera's pitch (it looks slightly downward at the player via
+            // lookAt). That gave the thrown sphere an upward tilt instead of a flat,
+            // horizontal launch. Using only `yaw` (the horizontal rotation) and rotating
+            // a flat vector around the Y axis discards that pitch entirely, so the throw
+            // stays horizontal - consistent with the normal forward-facing throw.
+            const throwDirection = isWalkingTowardCameraInThirdPerson
+                ? new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw)   // toward the camera, flat
+                : new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);              // original behavior, unchanged
+
             const spawnPosition = player.group.position.clone();
-            spawnPosition.y -= 0.2;
-            spawnPosition.x += 0.65; 
+            spawnPosition.y += 0.4; 
 
             weaponSystem.spawnProjectile(spawnPosition, throwDirection);
             player.triggerThrowAnimation(); 
