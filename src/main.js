@@ -116,7 +116,7 @@ function animate() {
 
     if (input.keys.shoot) {
         if (!shootDebounce) {
-            // previously the throw direction always came from camera.quaternion,
+            //  previously the throw direction always came from camera.quaternion,
             // i.e. purely from where the mouse/camera was pointing, completely ignoring
             // WASD input. Meanwhile the character's torso visually rotates to face
             // moveVector (see Player.js bodyRotationY), so while strafing/moving
@@ -141,7 +141,7 @@ function animate() {
         shootDebounce = false; 
     }
 
-    weaponSystem.update(physics.currentGravity, deltaTime);
+    weaponSystem.update(physics.currentGravity, deltaTime, world.getObstacleBoxes());
 
     // Update solar system orbit matrix calculations
     dayNightSystem.update(deltaTime, player.group.position, camera);
@@ -166,7 +166,10 @@ function animate() {
     player.updateFirstPersonVisibility(cameraManager.isFirstPerson);
     // Pass the current planet's gravity ratio so the walk cycle (cadence, stride
     // length, low-gravity bounce) reflects wherever the player currently is.
-    player.animateLimbs(deltaTime, isMoving, physics.isGrounded, physics.playerVelocityY, moveVector, yaw, physics.getGravityRatio());
+    // Also pass whether we're in first person so the torso (the player's own visible
+    // body while the head is hidden) stays locked to the camera's view direction
+    // instead of turning toward the movement direction while strafing.
+    player.animateLimbs(deltaTime, isMoving, physics.isGrounded, physics.playerVelocityY, moveVector, yaw, physics.getGravityRatio(), cameraManager.isFirstPerson);
     if (typeof TWEEN !== 'undefined') TWEEN.update();
     renderer.render(scene, camera);
 }
