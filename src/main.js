@@ -116,19 +116,20 @@ function animate() {
 
     if (input.keys.shoot) {
         if (!shootDebounce) {
-            const isWalkingTowardCameraInThirdPerson =
-                !cameraManager.isFirstPerson && input.keys.backward;
-
-            // FIX: previously this used camera.quaternion, which in third person also
-            // carries the camera's pitch (it looks slightly downward at the player via
-            // lookAt). That gave the thrown sphere an upward tilt instead of a flat,
-            // horizontal launch. Using only `yaw` (the horizontal rotation) and rotating
-            // a flat vector around the Y axis discards that pitch entirely, so the throw
-            // stays horizontal - consistent with the normal forward-facing throw.
-            const throwDirection = isWalkingTowardCameraInThirdPerson
-                ? new THREE.Vector3(0, 0, 1).applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw)   // toward the camera, flat
-                : new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);              // original behavior, unchanged
-
+            // previously the throw direction always came from camera.quaternion,
+            // i.e. purely from where the mouse/camera was pointing, completely ignoring
+            // WASD input. Meanwhile the character's torso visually rotates to face
+            // moveVector (see Player.js bodyRotationY), so while strafing/moving
+            // diagonally the body looked turned one way but the ball always flew off
+            // "straight" according to the camera instead. Now, whenever the player is
+            // actually moving, we throw along moveVector (already normalized and
+            // rotated into world space by yaw on the lines above) so the projectile
+            // matches the direction the character is visibly heading. When standing
+            // still, moveVector is a zero vector, so we fall back to the camera's
+            // facing direction as before (aim with the camera while stationary).
+            const throwDirection = isMoving
+                ? moveVector.clone().normalize()
+                : new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
             const spawnPosition = player.group.position.clone();
             spawnPosition.y += 0.4; 
 
@@ -140,7 +141,7 @@ function animate() {
         shootDebounce = false; 
     }
 
-    weaponSystem.update(physics.currentGravity, deltaTime, world.getObstacleBoxes());
+    weaponSystem.update(physics.currentGravity, deltaTime);
 
     // Update solar system orbit matrix calculations
     dayNightSystem.update(deltaTime, player.group.position, camera);
@@ -161,7 +162,7 @@ function animate() {
         viewDebounce = false;
     }
 
-    cameraManager.update(player.group.position, yaw, pitch, world.getObstacleBoxes());
+    cameraManager.update(player.group.position, yaw, pitch);
     player.updateFirstPersonVisibility(cameraManager.isFirstPerson);
     // Pass the current planet's gravity ratio so the walk cycle (cadence, stride
     // length, low-gravity bounce) reflects wherever the player currently is.
@@ -170,13 +171,10 @@ function animate() {
     renderer.render(scene, camera);
 }
 
-// Handle window resize events to maintain aspect ratio and renderer size
 function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
-
-
 
 window.onload = init;
