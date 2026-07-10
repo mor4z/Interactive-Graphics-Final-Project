@@ -12,7 +12,7 @@ export class SkyboxManager {
         this.atmosphereData = {
             mercury: { color: 0x000000, starOpacity: 1.0, starColor: 0xffffff, hasFog: false }, 
             venus:   { color: 0x5a3c16, starOpacity: 0.0, starColor: 0x000000, hasFog: true },  
-            earth:   { color: 0x2a4d7c, starOpacity: 0.5, starColor: 0xddddff, hasFog: false }, // <-- Fog completely disabled
+            earth:   { color: 0x2a4d7c, starOpacity: 0.5, starColor: 0xddddff, hasFog: false }, 
             moon:    { color: 0x000000, starOpacity: 1.0, starColor: 0xffffff, hasFog: false }, 
             mars:    { color: 0x4d261a, starOpacity: 0.6, starColor: 0xffeedd, hasFog: true },  
             jupiter: { color: 0x21160c, starOpacity: 0.0, starColor: 0x000000, hasFog: true },  
@@ -76,7 +76,7 @@ export class SkyboxManager {
         this.starMaterial.color.setHex(cfg.starColor);
     }
 
-    // RESTORED: Removed dynamic lerps to keep colors perfectly locked and stable
+    //  Removed dynamic lerps to keep colors perfectly locked and stable
     update(playerPosition, deltaTime, sunNormalizedY = 0) {
         if (this.starsMesh) {
             this.starsMesh.position.copy(playerPosition);
