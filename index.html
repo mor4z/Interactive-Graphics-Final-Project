@@ -17,7 +17,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
 
     <style>
         /* ============================================================
@@ -36,6 +36,15 @@
             --wv-text-dim: #8891a7;
             --wv-accent: #3e76b0; /* default: Earth */
             --wv-accent-soft: rgba(62, 118, 176, 0.35);
+
+            /* NASA-console additions: warm telemetry amber for status/labels,
+               a phosphor-green "system nominal" tone for live indicators, and a
+               brighter grid-line color used only for the schematic overlay. */
+            --wv-amber: #ffb238;
+            --wv-green: #5dffb0;
+            --wv-grid-line: rgba(255, 255, 255, 0.045);
+            --wv-mono: 'JetBrains Mono', monospace;
+            --wv-display: 'Orbitron', 'Space Grotesk', system-ui, sans-serif;
         }
 
         #welcome-screen, #welcome-screen * { box-sizing: border-box; }
@@ -62,6 +71,21 @@
         @keyframes wv-twinkle {
             0%, 100% { opacity: 0.35; }
             50% { opacity: 0.7; }
+        }
+
+        /* Faint schematic/blueprint grid, like a mission-control display overlay.
+           Sits above the starfield but below the panel, purely decorative. */
+        #wv-grid {
+            position: fixed;
+            inset: 0;
+            z-index: 499;
+            pointer-events: none;
+            background-image:
+                linear-gradient(var(--wv-grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--wv-grid-line) 1px, transparent 1px);
+            background-size: 42px 42px;
+            mask-image: radial-gradient(ellipse 75% 65% at 50% 40%, #000 40%, transparent 85%);
+            -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 40%, #000 40%, transparent 85%);
         }
 
         #wv-backdrop {
@@ -93,15 +117,16 @@
         }
 
         .wv-panel {
+            position: relative;
             width: min(880px, 100%);
             max-height: 92vh;
             overflow-y: auto;
             background: var(--wv-panel);
             border: 1px solid var(--wv-line);
-            border-radius: 18px;
+            border-radius: 4px;
             backdrop-filter: blur(18px);
             -webkit-backdrop-filter: blur(18px);
-            padding: 40px 44px 32px;
+            padding: 26px 40px 24px;
             box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
             animation: wv-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1);
         }
@@ -112,21 +137,43 @@
         }
 
         .wv-eyebrow {
-            font-family: 'JetBrains Mono', monospace;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            font-family: var(--wv-mono);
             font-size: 12px;
             letter-spacing: 0.22em;
             text-transform: uppercase;
             color: var(--wv-text-dim);
-            margin: 0 0 10px;
+            margin: 0 0 8px;
+        }
+
+        /* Small blinking "telemetry live" dot, like a status light on a
+           mission-control readout. */
+        .wv-status-dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--wv-green);
+            box-shadow: 0 0 8px var(--wv-green);
+            flex-shrink: 0;
+            animation: wv-pulse 1.8s ease-in-out infinite;
+        }
+
+        @keyframes wv-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.25; }
         }
 
         #welcome-screen h1 {
-            font-size: clamp(38px, 6vw, 58px);
-            font-weight: 700;
-            letter-spacing: 0.01em;
-            line-height: 1;
-            margin: 0 0 14px;
+            font-family: var(--wv-display);
+            font-size: clamp(28px, 4.4vw, 42px);
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            line-height: 1.1;
+            margin: 0 0 10px;
             color: var(--wv-text);
+            text-shadow: 0 0 24px var(--wv-accent-soft);
         }
 
         .wv-accent-bar {
@@ -135,30 +182,37 @@
             border-radius: 2px;
             background: var(--wv-accent);
             box-shadow: 0 0 16px var(--wv-accent);
-            margin: 0 0 18px;
+            margin: 0 0 12px;
             transition: background 0.6s ease, box-shadow 0.6s ease;
         }
 
         .wv-intro {
             color: var(--wv-text-dim);
-            font-size: 15px;
-            line-height: 1.6;
+            font-size: 13.5px;
+            line-height: 1.5;
             max-width: none;
-            margin: 0 0 28px;
+            margin: 0 0 16px;
         }
 
         .wv-intro strong { color: var(--wv-text); font-weight: 500; }
 
         .wv-section-label {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--wv-mono);
             font-size: 11px;
+            font-weight: 700;
             letter-spacing: 0.18em;
             text-transform: uppercase;
-            color: var(--wv-text-dim);
-            margin: 0 0 12px;
+            color: var(--wv-amber);
+            margin: 0 0 8px;
             display: flex;
             align-items: center;
             gap: 10px;
+        }
+
+        .wv-section-label::before {
+            content: '//';
+            color: var(--wv-text-dim);
+            font-weight: 400;
         }
 
         .wv-section-label::after {
@@ -171,8 +225,8 @@
         .wv-planet-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 26px;
+            gap: 8px;
+            margin-bottom: 16px;
         }
 
         @media (max-width: 640px) {
@@ -185,16 +239,31 @@
             display: flex;
             flex-direction: column;
             align-items: flex-start;
-            gap: 6px;
+            gap: 4px;
             text-align: left;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid var(--wv-line);
-            border-radius: 12px;
-            padding: 13px 14px;
+            border-radius: 3px;
+            padding: 10px 12px;
             cursor: pointer;
             color: var(--wv-text);
             font-family: inherit;
             transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
+        }
+
+        /* Small squared corner tick, top-right - echoes the main panel's HUD
+           framing at a smaller scale so each destination reads like its own
+           targeting readout rather than a generic UI card. */
+        .wv-planet-card::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 7px;
+            height: 7px;
+            border-top: 1.5px solid var(--wv-card-color);
+            border-right: 1.5px solid var(--wv-card-color);
+            opacity: 0.7;
         }
 
         .wv-planet-card:hover {
@@ -222,12 +291,24 @@
             flex-shrink: 0;
         }
 
-        .wv-planet-name { font-weight: 500; font-size: 15px; }
+        .wv-planet-name {
+            font-family: var(--wv-display);
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
 
         .wv-planet-gravity {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--wv-mono);
             font-size: 11.5px;
             color: var(--wv-text-dim);
+        }
+
+        .wv-planet-gravity::before {
+            content: 'G ';
+            color: var(--wv-amber);
+            opacity: 0.8;
         }
 
         .wv-planet-flavor {
@@ -237,44 +318,149 @@
             margin-top: 2px;
         }
 
-        .wv-controls-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 28px;
+        /* ============================================================
+           CONTROLS SECTION — three HUD-style "control modules" instead of a
+           flat inline key list, echoing the same console-panel language as
+           the planet cards (corner tick, mono labels, amber accents).
+           ============================================================ */
+        .wv-controls-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 18px;
         }
 
-        .wv-control-item {
+        @media (max-width: 640px) {
+            .wv-controls-grid { grid-template-columns: 1fr; }
+        }
+
+        .wv-ctrl-module {
+            position: relative;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--wv-line);
+            border-radius: 3px;
+            padding: 10px 14px 11px;
             display: flex;
+            flex-direction: column;
             align-items: center;
+            text-align: center;
             gap: 7px;
-            font-size: 12.5px;
-            color: var(--wv-text-dim);
         }
 
-        .wv-control-item kbd {
-            font-family: 'JetBrains Mono', monospace;
+        .wv-ctrl-module-corner {
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 7px;
+            height: 7px;
+            border-top: 1.5px solid var(--wv-amber);
+            border-right: 1.5px solid var(--wv-amber);
+            opacity: 0.6;
+        }
+
+        .wv-ctrl-title {
+            font-family: var(--wv-mono);
+            font-size: 10.5px;
+            font-weight: 700;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--wv-text-dim);
+            margin: 0;
+            align-self: flex-start;
+        }
+
+        .wv-ctrl-desc {
             font-size: 11px;
+            color: var(--wv-text-dim);
+            line-height: 1.4;
+            margin: 0;
+        }
+
+        .wv-ctrl-module kbd {
+            font-family: var(--wv-mono);
+            font-size: 11px;
+            font-weight: 500;
             background: rgba(255, 255, 255, 0.06);
             border: 1px solid var(--wv-line);
             border-bottom-width: 2px;
-            border-radius: 5px;
-            padding: 3px 7px;
+            border-radius: 4px;
             color: var(--wv-text);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* WASD arranged as a compact directional pad (W above, A/S/D in a
+           row) instead of four keys in a line - reads instantly as "movement"
+           rather than needing the word spelled out next to it. */
+        .wv-dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 26px);
+            grid-template-rows: repeat(2, 26px);
+            gap: 4px;
+        }
+
+        .wv-dpad kbd { width: 26px; height: 26px; padding: 0; }
+
+        .wv-dpad-w { grid-column: 2; grid-row: 1; }
+        .wv-dpad-a { grid-column: 1; grid-row: 2; }
+        .wv-dpad-s { grid-column: 2; grid-row: 2; }
+        .wv-dpad-d { grid-column: 3; grid-row: 2; }
+
+        .wv-ctrl-icon-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-height: 26px;
+        }
+
+        .wv-key-wide { padding: 0 12px; height: 26px; }
+        .wv-ctrl-icon-row kbd:not(.wv-key-wide) { width: 26px; height: 26px; padding: 0; }
+
+        /* Small mouse silhouette built entirely from CSS (border-radius body
+           + a scroll-wheel tick), so the "View" module has a glanceable icon
+           instead of just the word "Mouse". */
+        .wv-mouse-icon {
+            position: relative;
+            width: 16px;
+            height: 24px;
+            border: 1.5px solid var(--wv-text-dim);
+            border-radius: 8px 8px 9px 9px;
+            flex-shrink: 0;
+        }
+
+        .wv-mouse-wheel {
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 2px;
+            height: 6px;
+            background: var(--wv-amber);
+            border-radius: 1px;
+            animation: wv-scroll 1.6s ease-in-out infinite;
+        }
+
+        @keyframes wv-scroll {
+            0%, 100% { transform: translate(-50%, 0); opacity: 1; }
+            50% { transform: translate(-50%, 3px); opacity: 0.4; }
         }
 
         #wv-start-btn {
+            position: relative;
             width: 100%;
-            padding: 15px;
-            font-family: inherit;
-            font-size: 15px;
-            font-weight: 500;
-            letter-spacing: 0.02em;
+            padding: 13px;
+            font-family: var(--wv-display);
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
             color: #05060a;
             background: var(--wv-accent);
             border: none;
-            border-radius: 10px;
+            border-radius: 3px;
             cursor: pointer;
+            clip-path: polygon(14px 0, 100% 0, 100% calc(100% - 14px), calc(100% - 14px) 100%, 0 100%, 0 14px);
             transition: background 0.6s ease, filter 0.15s ease, transform 0.1s ease;
         }
 
@@ -382,7 +568,7 @@
 
     <div id="welcome-screen">
         <div class="wv-panel">
-            <p class="wv-eyebrow">Orbital Navigation System</p>
+            <p class="wv-eyebrow"><span class="wv-status-dot"></span>Orbital Navigation System &mdash; Telemetry Live</p>
             <h1>SPACE VALLEY</h1>
             <div class="wv-accent-bar" id="wv-accent-bar"></div>
             <p class="wv-intro">
@@ -454,12 +640,40 @@
             </div>
 
             <p class="wv-section-label">Controls</p>
-            <div class="wv-controls-row">
-                <span class="wv-control-item"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> move</span>
-                <span class="wv-control-item">Mouse look</span>
-                <span class="wv-control-item"><kbd>Space</kbd> jump</span>
-                <span class="wv-control-item"><kbd>V</kbd> toggle view</span>
-                <span class="wv-control-item"><kbd>F</kbd> throw</span>
+            <div class="wv-controls-grid">
+
+                <div class="wv-ctrl-module">
+                    <span class="wv-ctrl-module-corner"></span>
+                    <p class="wv-ctrl-title">Movement</p>
+                    <div class="wv-dpad">
+                        <kbd class="wv-dpad-w">W</kbd>
+                        <kbd class="wv-dpad-a">A</kbd>
+                        <kbd class="wv-dpad-s">S</kbd>
+                        <kbd class="wv-dpad-d">D</kbd>
+                    </div>
+                    <p class="wv-ctrl-desc">Translate across the surface</p>
+                </div>
+
+                <div class="wv-ctrl-module">
+                    <span class="wv-ctrl-module-corner"></span>
+                    <p class="wv-ctrl-title">View</p>
+                    <div class="wv-ctrl-icon-row">
+                        <span class="wv-mouse-icon" aria-hidden="true"><span class="wv-mouse-wheel"></span></span>
+                        <kbd>V</kbd>
+                    </div>
+                    <p class="wv-ctrl-desc">Look around &middot; cycle 1st / 3rd person</p>
+                </div>
+
+                <div class="wv-ctrl-module">
+                    <span class="wv-ctrl-module-corner"></span>
+                    <p class="wv-ctrl-title">Action</p>
+                    <div class="wv-ctrl-icon-row">
+                        <kbd class="wv-key-wide">Space</kbd>
+                        <kbd>F</kbd>
+                    </div>
+                    <p class="wv-ctrl-desc">Jump &middot; throw object</p>
+                </div>
+
             </div>
 
             <button id="wv-start-btn" type="button">Launch Mission &rarr;</button>
