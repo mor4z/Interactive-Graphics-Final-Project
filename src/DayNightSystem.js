@@ -9,14 +9,6 @@ export class DayNightSystem {
         this.currentSunIntensity = 1.2;
         this.textureLoader = new THREE.TextureLoader();
 
-        // Procedural fallback textures for the Moon and Earth as seen from afar (Moon
-        // from Earth, Earth from the Moon). Generated once here and reused - if a real
-        // photo texture exists at ./assets/textures/<name>/color.jpg it's preferred and
-        // loaded instead (see updateTheme), but these guarantee a realistic, textured
-        // look even when that file is missing, instead of a flat solid-color sphere.
-        this.moonProceduralTexture = this.createMoonProceduralTexture();
-        this.earthProceduralTexture = this.createEarthProceduralTexture();
-
         // Updated Database: Reuses existing primary planet folders to guarantee textures load correctly
         // secondaryPhase: angle offset relative to the sun's own orbit clock.
         // Math.PI (180°) = rises when the sun sets, like a real moon.
@@ -24,12 +16,12 @@ export class DayNightSystem {
             mercury: { sunScale: 2.5, secondary: 'none',    orbitType: 'none' },
             venus:   { sunScale: 1.3, secondary: 'none',    orbitType: 'none' },
             earth:   { sunScale: 1.0, secondary: 'moon',    orbitType: 'synced',  secondaryPhase: Math.PI,        speedMult: 1.0, colorFallback: 0x888888 },
-            moon:    { sunScale: 1.0, secondary: 'earth',   orbitType: 'fixed',  secondaryPhase: Math.PI * 0.95, speedMult: 0.12, colorFallback: 0x2233ff }, // Uses assets/textures/earth/
+            moon:    { sunScale: 1.0, secondary: 'earth',   orbitType: 'fixed',  secondaryPhase: Math.PI * 0.95, speedMult: 0.12, colorFallback: 0x2233ff }, 
             mars:    { sunScale: 0.7, secondary: 'earth',   orbitType: 'synced',  secondaryPhase: Math.PI * 0.6,  speedMult: 1.8, colorFallback: 0x2233ff },
             jupiter: { sunScale: 0.4, secondary: 'saturn',  orbitType: 'synced',  secondaryPhase: Math.PI * 1.3,  speedMult: 0.6, colorFallback: 0xddaa55 },
             saturn:  { sunScale: 0.25, secondary: 'jupiter', orbitType: 'synced', secondaryPhase: Math.PI * 0.8,  speedMult: 0.5, colorFallback: 0xffe6cc },
             uranus:  { sunScale: 0.15, secondary: 'neptune', orbitType: 'synced', secondaryPhase: Math.PI * 1.5,  speedMult: 0.4, colorFallback: 0x060e21 },
-            neptune: { sunScale: 0.1, secondary: 'uranus',  orbitType: 'synced',  secondaryPhase: Math.PI * 0.4,  speedMult: 0.45, colorFallback: 0x172b30 }
+            neptune: { sunScale: 0.1, secondary: 'uranus',  orbitType: 'synced',  secondaryPhase: Math.PI * 0.4,  speedMult: 0.45, colorFallback: 0x172b30}
         };
 
         this.createRealisticSun();
@@ -153,113 +145,6 @@ createRealisticSun() {
         this.scene.add(this.secondaryMesh);
     }
 
-    // Procedurally paints a lunar-looking surface: grey regolith base, a handful of
-    // dark "maria" plains, and a scatter of craters with a bright rim on one side to
-    // fake directional relief shading.
-    createMoonProceduralTexture() {
-        const size = 512;
-        const canvas = document.createElement('canvas');
-        canvas.width = size; canvas.height = size;
-        const ctx = canvas.getContext('2d');
-
-        ctx.fillStyle = '#9a9a9a';
-        ctx.fillRect(0, 0, size, size);
-
-        // Dark basaltic "maria" patches
-        for (let i = 0; i < 6; i++) {
-            const x = Math.random() * size;
-            const y = Math.random() * size;
-            const r = 40 + Math.random() * 70;
-            const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-            grad.addColorStop(0, 'rgba(65,65,70,0.55)');
-            grad.addColorStop(1, 'rgba(65,65,70,0)');
-            ctx.fillStyle = grad;
-            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-        }
-
-        // Craters: soft shadow + a bright highlight rim on one edge
-        for (let i = 0; i < 150; i++) {
-            const x = Math.random() * size;
-            const y = Math.random() * size;
-            const r = 2 + Math.random() * 14;
-
-            const shade = ctx.createRadialGradient(x, y, 0, x, y, r);
-            shade.addColorStop(0, 'rgba(35,35,35,0.5)');
-            shade.addColorStop(0.7, 'rgba(35,35,35,0.15)');
-            shade.addColorStop(1, 'rgba(35,35,35,0)');
-            ctx.fillStyle = shade;
-            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-
-            ctx.strokeStyle = 'rgba(225,225,225,0.25)';
-            ctx.lineWidth = Math.max(1, r * 0.15);
-            ctx.beginPath();
-            ctx.arc(x, y, r * 0.9, Math.PI * 1.1, Math.PI * 1.9);
-            ctx.stroke();
-        }
-
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-        return texture;
-    }
-
-    // Procedurally paints an Earth-looking surface: blue ocean gradient, irregular
-    // green/brown continent blobs, white polar caps, and soft translucent cloud swirls.
-    createEarthProceduralTexture() {
-        const size = 512;
-        const canvas = document.createElement('canvas');
-        canvas.width = size; canvas.height = size;
-        const ctx = canvas.getContext('2d');
-
-        const oceanGrad = ctx.createLinearGradient(0, 0, 0, size);
-        oceanGrad.addColorStop(0, '#0a3d75');
-        oceanGrad.addColorStop(0.5, '#1c5f9e');
-        oceanGrad.addColorStop(1, '#0a3d75');
-        ctx.fillStyle = oceanGrad;
-        ctx.fillRect(0, 0, size, size);
-
-        const continentColors = ['#3f6b34', '#5a7d3a', '#8a7248', '#4a7a3d'];
-        for (let i = 0; i < 7; i++) {
-            const cx = Math.random() * size;
-            const cy = size * 0.15 + Math.random() * size * 0.7;
-            const blobRadius = 30 + Math.random() * 60;
-            ctx.fillStyle = continentColors[i % continentColors.length];
-            ctx.beginPath();
-            const points = 10;
-            for (let p = 0; p <= points; p++) {
-                const angle = (p / points) * Math.PI * 2;
-                const rr = blobRadius * (0.6 + Math.random() * 0.6);
-                const x = cx + Math.cos(angle) * rr;
-                const y = cy + Math.sin(angle) * rr * 0.6;
-                if (p === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-            }
-            ctx.closePath();
-            ctx.fill();
-        }
-
-        // Polar ice caps
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.fillRect(0, 0, size, size * 0.06);
-        ctx.fillRect(0, size * 0.94, size, size * 0.06);
-
-        // Cloud swirls
-        for (let i = 0; i < 40; i++) {
-            const x = Math.random() * size;
-            const y = Math.random() * size;
-            const r = 15 + Math.random() * 35;
-            const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
-            grad.addColorStop(0, 'rgba(255,255,255,0.5)');
-            grad.addColorStop(1, 'rgba(255,255,255,0)');
-            ctx.fillStyle = grad;
-            ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-        }
-
-        const texture = new THREE.CanvasTexture(canvas);
-        texture.wrapS = THREE.RepeatWrapping;
-        texture.wrapT = THREE.ClampToEdgeWrapping;
-        return texture;
-    }
-
     createLights() {
         this.ambientLight = new THREE.AmbientLight(0xffffff, 0.15);
         this.scene.add(this.ambientLight);
@@ -274,7 +159,7 @@ createRealisticSun() {
         const d = 40;
         this.sunLight.shadow.camera.left = -d; this.sunLight.shadow.camera.right = d;
         this.sunLight.shadow.camera.top = d; this.sunLight.shadow.camera.bottom = -d;
-        this.sunLight.shadow.bias = -0.000005;      // MODIFIED to reduce the gap between the shadow and he object
+        this.sunLight.shadow.bias = -0.0005;
         this.scene.add(this.sunLight);
 
         // Soft bluish moonlight - only lit up (on Earth) when the moon is above the horizon
@@ -330,24 +215,10 @@ createRealisticSun() {
                 }, 
                 undefined, 
                 () => {
-                    // FIX: instead of falling back to a flat solid color (which is what
-                    // made the body look like a lifeless, textureless "planet"), use the
-                    // procedural Moon/Earth texture generated in the constructor. Any
-                    // other secondary body type (e.g. Jupiter/Saturn seen from a
-                    // neighboring planet) still falls back to its plain color, since we
-                    // don't have a dedicated procedural texture for those.
-                    const proceduralTex =
-                        cfg.secondary === 'moon' ? this.moonProceduralTexture :
-                        cfg.secondary === 'earth' ? this.earthProceduralTexture :
-                        null;
-
-                    if (proceduralTex) {
-                        this.secondaryMaterial.map = proceduralTex;
-                        this.secondaryMaterial.color.setHex(0xffffff);
-                    } else {
-                        this.secondaryMaterial.map = null;
-                        this.secondaryMaterial.color.setHex(cfg.colorFallback);
-                    }
+                    // Photo texture failed to load: fall back to a flat solid color
+                    // for the secondary body (no procedural texture generation).
+                    this.secondaryMaterial.map = null;
+                    this.secondaryMaterial.color.setHex(cfg.colorFallback);
                     this.secondaryMaterial.needsUpdate = true;
                 }
             );
