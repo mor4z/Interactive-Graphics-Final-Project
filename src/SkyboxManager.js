@@ -7,8 +7,7 @@ export class SkyboxManager {
         this.skyRotationTime = 0;
         this.currentPlanet = 'earth';
         
-        // BASELINE DATABASE: Earth set to its original steady color with fog disabled
-        // star opacity is to show the stars from a specific planet
+        
         this.atmosphereData = {
             mercury: { color: 0x000000, starOpacity: 1.0, starColor: 0xffffff, hasFog: false }, 
             venus:   { color: 0x5a3c16, starOpacity: 0.0, starColor: 0x000000, hasFog: true },  
