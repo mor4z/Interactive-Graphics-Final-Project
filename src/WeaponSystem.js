@@ -46,13 +46,13 @@ export class WeaponSystem {
             const p = this.projectiles[i];
             p.lifeTime += dt;
 
-            // 1. Apply gravity drop to the vertical velocity component (Y)
+            // Apply gravity drop to the vertical velocity component (Y)
             p.velocity.y -= currentGravity * dt;
 
-            // 2. Move the mesh in space based on its vector components
+            // Move the mesh in space based on its vector components
             p.mesh.position.addScaledVector(p.velocity, dt);
 
-            // 3. Simple ground bounce collision detection
+            // Simple ground bounce collision detection
             const floorY = sphereRadius; // Sphere radius offset from ground
             if (p.mesh.position.y <= floorY) {
                 p.mesh.position.y = floorY;
@@ -61,10 +61,10 @@ export class WeaponSystem {
                 p.velocity.z *= 0.8;
             }
 
-            // 4. Bounce against static box obstacles instead of passing through them
+            // Bounce against static box obstacles instead of passing through them
             this.resolveObstacleBounce(p, obstacles, sphereRadius);
 
-            // 5. Memory cleanup: delete old projectiles
+            // Memory cleanup: delete old projectiles
             if (p.lifeTime > maxLife) {
                 this.scene.remove(p.mesh);
                 p.mesh.geometry.dispose();
@@ -96,8 +96,9 @@ export class WeaponSystem {
 
             if (distSq >= radius * radius) continue; // no overlap with this box
 
-            // Penetration depth on each axis (how much we need to push out)
+            // Penetration depth on each axis 
             const penX = radius - Math.abs(dx) + (dx === 0 ? 0 : 0);
+            
             // Use the overlap on each world axis between sphere bounds and box bounds
             const overlapX = Math.min(pos.x + radius - box.min.x, box.max.x - (pos.x - radius));
             const overlapY = Math.min(pos.y + radius - box.min.y, box.max.y - (pos.y - radius));
