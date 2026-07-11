@@ -153,7 +153,14 @@ export class DayNightSystem {
 
         // Soft bluish moonlight - only lit up (on Earth) when the moon is above the horizon
         this.moonLight = new THREE.DirectionalLight(0x9fb6ff, 0.0);
-        this.moonLight.castShadow = false;
+        this.moonLight.castShadow = true;
+        this.moonLight.shadow.mapSize.width = 2048;
+        this.moonLight.shadow.mapSize.height = 2048;
+        this.moonLight.shadow.camera.near = 0.5;
+        this.moonLight.shadow.camera.far = 1000;
+        this.moonLight.shadow.camera.left = -d; this.moonLight.shadow.camera.right = d;
+        this.moonLight.shadow.camera.top = d; this.moonLight.shadow.camera.bottom = -d;
+        this.moonLight.shadow.bias = -0.000005;
         this.scene.add(this.moonLight);
         this.scene.add(this.moonLight.target);
 
