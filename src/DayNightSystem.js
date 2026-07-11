@@ -158,6 +158,7 @@ export class DayNightSystem {
         this.moonLight.shadow.mapSize.height = 2048;
         this.moonLight.shadow.camera.near = 0.5;
         this.moonLight.shadow.camera.far = 1000;
+        
         this.moonLight.shadow.camera.left = -d; this.moonLight.shadow.camera.right = d;
         this.moonLight.shadow.camera.top = d; this.moonLight.shadow.camera.bottom = -d;
         this.moonLight.shadow.bias = -0.000005;
@@ -269,6 +270,7 @@ export class DayNightSystem {
                 this.moonLight.target.updateMatrixWorld();
                 const moonFactor = THREE.MathUtils.clamp(secY / 200, 0, 1);
                 this.moonLight.intensity = moonFactor * 0.25;
+                this.moonLight.castShadow = (currentPlanet === 'earth' && cfg.secondary === 'moon' && this.moonLight.intensity > 0.01);
             } else {
                 this.moonLight.intensity = 0.0;
             }
