@@ -28,27 +28,13 @@ export class CameraManager {
             this.camera.position.copy(safeFpPos);
             this.camera.rotation.set(pitch, yaw, 0, 'YXZ');
         } else {
-            const radius = 6.0;
-            const height = 2.5;
-            
-            const minGroundY = playerPosition.y + 0.4; 
-            const minOffsetY = minGroundY - playerPosition.y;
-            const minPitch = Math.asin(THREE.MathUtils.clamp(minOffsetY / radius, -1, 1));
-            const clampedPitch = Math.max(pitch, minPitch);
+            const rotatedTpOffset = this.tpOffset.clone().applyAxisAngle(new THREE.Vector3(0, 1, 0), yaw);
+            const desiredTpPos = playerPosition.clone().add(rotatedTpOffset);
 
-            const offsetX = Math.sin(yaw) * Math.cos(clampedPitch) * radius;
-            const offsetZ = Math.cos(yaw) * Math.cos(clampedPitch) * radius;
-            const offsetY = Math.sin(clampedPitch) * radius;
-            const targetCamPos = playerPosition.clone().add(new THREE.Vector3(offsetX, offsetY, offsetZ));
+            const safeTpPos = this.resolveCameraCollision(playerPosition, desiredTpPos, obstacles, yaw, pitch, 0.15);
 
-            const pivotOrigin = playerPosition.clone().add(new THREE.Vector3(0, height, 0));
-
-            const safeCamPos = this.resolveCameraCollision(pivotOrigin, targetCamPos, obstacles, yaw, clampedPitch, 0.3);
-
-            this.camera.position.copy(safeCamPos);
-
-            const lookAtTarget = playerPosition.clone().add(new THREE.Vector3(0, -0.2, 0));
-            this.camera.lookAt(lookAtTarget);
+            this.camera.position.copy(safeTpPos);
+            this.camera.rotation.set(pitch, yaw, 0, 'YXZ');
         }
     }
 
