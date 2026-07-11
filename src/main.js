@@ -144,7 +144,7 @@ function animate() {
         viewDebounce = false;
     }
 
-    cameraManager.update(player.group.position, yaw, pitch);
+    cameraManager.update(player.group.position, yaw, pitch,world.getObstacleBoxes());
     player.updateFirstPersonVisibility(cameraManager.isFirstPerson);
     
     // Animation of the movement
