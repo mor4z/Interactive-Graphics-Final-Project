@@ -9,8 +9,7 @@ export class DayNightSystem {
         this.currentSunIntensity = 1.2;
         this.textureLoader = new THREE.TextureLoader();
 
-        // Updated Database: Reuses existing primary planet folders to guarantee textures load correctly
-        // secondaryPhase: angle offset relative to the sun's own orbit clock.
+        
         // Math.PI (180°) = rises when the sun sets, like a real moon.
         this.planetaryData = {
             mercury: { sunScale: 2.5, secondary: 'none',    orbitType: 'none' },
@@ -73,7 +72,7 @@ createRealisticSun() {
         blending: THREE.AdditiveBlending, 
         transparent: true, 
         depthWrite: false,
-        fog: false // <--- CRITICAL FIX: Forces the sun glow to bypass Earth's atmospheric fog math!
+        fog: false //Forces the sun glow to bypass Earth's atmospheric fog math!
     });
     this.sunCorona = new THREE.Mesh(new THREE.PlaneGeometry(35, 35), this.coronaMaterial);
     this.sunCorona.position.z = -0.1;
@@ -118,7 +117,7 @@ createRealisticSun() {
         blending: THREE.AdditiveBlending, 
         transparent: true, 
         depthWrite: false,
-        fog: false // <--- CRITICAL FIX: Forces lens rays to render perfectly on top of atmospheric scattering
+        fog: false //Forces lens rays to render perfectly on top of atmospheric scattering
     });
     this.sunFlare = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), this.flareMaterial);
     this.sunFlare.position.z = -0.2;
@@ -131,15 +130,7 @@ createRealisticSun() {
         this.secondaryMaterial = new THREE.MeshStandardMaterial({ roughness: 0.8, metalness: 0.1 });
         this.secondaryMesh = new THREE.Mesh(geom, this.secondaryMaterial);
 
-        // FIX: Put the secondary body on a dedicated render/light layer (1).
-        // This detaches it from the main `sunLight`, whose intensity is deliberately
-        // dimmed based on the LOCAL horizon (sunrise/sunset on the ground the player
-        // stands on). A real moon/earth seen from afar is still fully sunlit even
-        // when it's night where the player is standing - that's exactly why we can
-        // see the Moon at night. The dedicated `secondaryLight` below (also on layer 1)
-        // lights ONLY this mesh, with a stable intensity, giving a correct, realistic
-        // day/night terminator on the body itself instead of it going dark with the
-        // local ground.
+        // Put the secondary body on a dedicated render/light layer (1).
         this.secondaryMesh.layers.set(1);
 
         this.scene.add(this.secondaryMesh);
@@ -168,13 +159,9 @@ createRealisticSun() {
         this.scene.add(this.moonLight);
         this.scene.add(this.moonLight.target);
 
-        // FIX: Dedicated light for the secondary body (Moon seen from Earth, Earth seen
+        //  Dedicated light for the secondary body (Moon seen from Earth, Earth seen
         // from the Moon, etc). Lives on layer 1 ONLY, so it exclusively lights
-        // `secondaryMesh` and never the ground/player. Its intensity is NOT tied to the
-        // local sunY horizon-dimming factor, so the body stays properly (and
-        // realistically) lit regardless of whether it's day or night where the player
-        // is standing - only its own sun-facing hemisphere is bright, giving a correct
-        // lit/dark terminator instead of a flat, lightless disc.
+        // `secondaryMesh` and never the ground/player. .
         this.secondaryLight = new THREE.DirectionalLight(0xffffff, 1.0);
         this.secondaryLight.castShadow = false;
         this.secondaryLight.layers.set(1);
@@ -262,10 +249,7 @@ createRealisticSun() {
         this.secondaryMesh.position.set(playerPosition.x + secX, playerPosition.y + secY, playerPosition.z + secZ);
         this.secondaryMesh.rotation.y += deltaTime * 0.02;
 
-        // FIX: Feed the dedicated secondary-body light with the SAME direction as the
-        // real sun (sun position -> player), so the lit/dark hemisphere of the body
-        // matches the true sun angle (correct "phase"), but keep its intensity stable
-        // instead of using the horizon-dimmed `sunLight.intensity`. This is what makes
+        // Feed the dedicated secondary-body light  This is what makes
         // the Moon/Earth stay realistically visible and lit at any time of day.
         this.secondaryLight.position.copy(this.sunGroup.position);
         this.secondaryLight.target.position.copy(this.secondaryMesh.position);
@@ -292,7 +276,7 @@ createRealisticSun() {
         this.sunFlare.lookAt(camera.position);
         this.sunFlare.rotation.z = this.sunOrbitTime * 0.2;
 
-        // FIX: The secondary body lives on layer 1 (see createSecondaryBody). The
+        // The secondary body lives on layer 1 . The
         // camera must explicitly enable that layer or it will simply never render it.
         camera.layers.enable(1);
     }
