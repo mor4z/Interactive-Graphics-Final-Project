@@ -111,9 +111,7 @@ export class Player {
             this.torso.position.y = this.torsoBaseY;
         } else if (isMoving) {
             // WALK ANIMATION: cadence and stride length now depend on the planet's gravity,
-            // like a pendulum's period scales with sqrt(g). Heavier gravity (Jupiter) -> 
-            // quicker, shorter, "heavier" looking steps. Lighter gravity (Moon, Mercury) ->
-            // slower, floatier steps with a wider swing.
+            // like a pendulum's period scales with sqrt(g). 
             const cadence = 0.012 * Math.sqrt(gRatio);
             const strideAmplitude = Math.min(1.1, 0.6 / Math.sqrt(gRatio));
             const time = Date.now() * cadence;
