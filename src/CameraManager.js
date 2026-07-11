@@ -31,8 +31,6 @@ export class CameraManager {
         } else {
             const radius = 6.0;
             const height = 2.5;
-
-            // --- Clamp  pitch BEFORE to compute offset
             
             const minGroundY = playerPosition.y + 0.4; 
             const minOffsetY = minGroundY - playerPosition.y;

@@ -40,7 +40,7 @@ export class Player {
         this.torso.add(this.head); 
 
         const visor = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.2, 0.1), visorMaterial);
-        visor.position.set(0, 0.05, -0.26); // prova a modificare
+        visor.position.set(0, 0.05, -0.26); 
         this.head.add(visor);
 
         // Limbs setup
@@ -60,7 +60,7 @@ export class Player {
     }
 
 
-       // Handling firstperson wiev
+    // Handling firstperson wiev
     updateFirstPersonVisibility(isFirstPerson) {
         if (isFirstPerson) {
             // hide head, show rest of body in firsti person
@@ -74,14 +74,12 @@ export class Player {
     }
 
    
-
     // Call this method whenever a projectile is fired to trigger the arm swing
     triggerThrowAnimation() {
         this.throwTimer = 0.3; // Animation will last 0.3 seconds
     }
-    animateLimbs(deltaTime, isMoving, isGrounded, playerVelocityY, moveVector, yaw, gravityRatio = 1) {
-        
-
+    
+    animateLimbs(deltaTime, isMoving, isGrounded, playerVelocityY, moveVector, yaw, gravityRatio = 1) {   
         // Target angles for default state
         let rArmTargetX = 0;
         let rArmTargetZ = 0;
@@ -94,7 +92,7 @@ export class Player {
         // of an absurdly fast blur or an almost-frozen shuffle.
         const gRatio = Math.max(0.15, Math.min(2.5, gravityRatio));
 
-        // 1. PHASE ONE: Baseline locomotive/environmental poses
+        // Base poses
         if (!isGrounded) {
             if (playerVelocityY > 0) {
                 // JUMPING UP
@@ -138,7 +136,7 @@ export class Player {
             this.torso.position.y = this.torsoBaseY;
         }
 
-        // --- CHARACTER MODEL TURNING LOGIC ---
+        // Turning the character
         if (isMoving && moveVector && moveVector.lengthSq() > 0) {
             // Calculate movement vector angle relative to camera yaw direction
             const moveAngle = Math.atan2(moveVector.x, moveVector.z);
@@ -156,16 +154,15 @@ export class Player {
         // Normalize angle differences between -PI and +PI to avoid the 360-degree flip bug
         angleDifference = Math.atan2(Math.sin(angleDifference), Math.cos(angleDifference));
         this.torso.rotation.y += angleDifference * rotationLerpSpeed;
-        // -------------------------------------
 
-        // 2. PHASE TWO: Overwrite right arm if THROW ANIMATION is active
+        // Overwrite right arm if THROW ANIMATION is active
         if (this.throwTimer > 0) {
             this.throwTimer -= deltaTime;
             rArmTargetX = -Math.PI / 1.2; 
             rArmTargetZ = -0.1; 
         }
 
-        // 3. PHASE THREE: Smooth interpolation (Lerp) for organic transitions
+        // Smooth interpolation (Lerp) for organic transitions
         const lerpSpeed = (isGrounded ? 15 : 10) * deltaTime;
         
         this.rightArmPivot.rotation.x += (rArmTargetX - this.rightArmPivot.rotation.x) * lerpSpeed;
@@ -174,7 +171,6 @@ export class Player {
         this.leftLegPivot.rotation.x  += (lLegTargetX - this.leftLegPivot.rotation.x) * lerpSpeed;
         this.rightArmPivot.rotation.z += (rArmTargetZ - this.rightArmPivot.rotation.z) * lerpSpeed;
     }
-
 
     getPosition() {
         return this.group.position;
