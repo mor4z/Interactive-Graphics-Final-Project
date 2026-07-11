@@ -150,7 +150,7 @@ createRealisticSun() {
         const d = 40;
         this.sunLight.shadow.camera.left = -d; this.sunLight.shadow.camera.right = d;
         this.sunLight.shadow.camera.top = d; this.sunLight.shadow.camera.bottom = -d;
-        this.sunLight.shadow.bias = -0.0005;
+        this.sunLight.shadow.bias = -0.000005;
         this.scene.add(this.sunLight);
 
         // Soft bluish moonlight - only lit up (on Earth) when the moon is above the horizon
