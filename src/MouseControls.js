@@ -4,7 +4,7 @@ export class MouseControls {
     constructor(renderer) {
         this.domElement = renderer.domElement;
         
-        // Track visual rotation using Euler angles (pitch for up/down, yaw for left/right)
+        // Track visual rotation using Euler angles
         this.pitch = 0; // Look up/down
         this.yaw = 0;   // Look left/right
         
@@ -22,7 +22,7 @@ export class MouseControls {
             }
         });
 
-        // Listen for raw mouse delta movements
+        // Listen for raw mouse movements
         document.addEventListener('mousemove', (e) => {
             if (document.pointerLockElement === this.domElement) {
                 this.handleMouseMove(e.clientX, e.clientY, e.movementX, e.movementY);
@@ -31,7 +31,7 @@ export class MouseControls {
     }
 
     handleMouseMove(clientX, clientY, movementX, movementY) {
-        // Apply sensitivity to the mouse delta movement
+        // Apply sensitivity to the mouse movement
         this.yaw -= movementX * this.sensitivity;
         this.pitch -= movementY * this.sensitivity;
 

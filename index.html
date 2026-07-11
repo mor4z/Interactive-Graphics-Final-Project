@@ -36,10 +36,7 @@
             --wv-text-dim: #8891a7;
             --wv-accent: #3e76b0; /* default: Earth */
             --wv-accent-soft: rgba(62, 118, 176, 0.35);
-
-            /* NASA-console additions: warm telemetry amber for status/labels,
-               a phosphor-green "system nominal" tone for live indicators, and a
-               brighter grid-line color used only for the schematic overlay. */
+            
             --wv-amber: #ffb238;
             --wv-green: #5dffb0;
             --wv-grid-line: rgba(255, 255, 255, 0.045);
@@ -73,8 +70,6 @@
             50% { opacity: 0.7; }
         }
 
-        /* Faint schematic/blueprint grid, like a mission-control display overlay.
-           Sits above the starfield but below the panel, purely decorative. */
         #wv-grid {
             position: fixed;
             inset: 0;
@@ -148,8 +143,6 @@
             margin: 0 0 8px;
         }
 
-        /* Small blinking "telemetry live" dot, like a status light on a
-           mission-control readout. */
         .wv-status-dot {
             width: 7px;
             height: 7px;
@@ -251,9 +244,6 @@
             transition: border-color 0.2s ease, background 0.2s ease, transform 0.15s ease;
         }
 
-        /* Small squared corner tick, top-right - echoes the main panel's HUD
-           framing at a smaller scale so each destination reads like its own
-           targeting readout rather than a generic UI card. */
         .wv-planet-card::after {
             content: '';
             position: absolute;
@@ -318,11 +308,6 @@
             margin-top: 2px;
         }
 
-        /* ============================================================
-           CONTROLS SECTION — three HUD-style "control modules" instead of a
-           flat inline key list, echoing the same console-panel language as
-           the planet cards (corner tick, mono labels, amber accents).
-           ============================================================ */
         .wv-controls-grid {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -390,9 +375,6 @@
             justify-content: center;
         }
 
-        /* WASD arranged as a compact directional pad (W above, A/S/D in a
-           row) instead of four keys in a line - reads instantly as "movement"
-           rather than needing the word spelled out next to it. */
         .wv-dpad {
             display: grid;
             grid-template-columns: repeat(3, 26px);
@@ -417,9 +399,6 @@
         .wv-key-wide { padding: 0 12px; height: 26px; }
         .wv-ctrl-icon-row kbd:not(.wv-key-wide) { width: 26px; height: 26px; padding: 0; }
 
-        /* Small mouse silhouette built entirely from CSS (border-radius body
-           + a scroll-wheel tick), so the "View" module has a glanceable icon
-           instead of just the word "Mouse". */
         .wv-mouse-icon {
             position: relative;
             width: 16px;
@@ -489,9 +468,7 @@
 
         #wv-pointer-hint.wv-visible { opacity: 1; }
 
-        /* #ui-container already sits in the DOM; restyle it to match the same
-           dark glass panel / typography language as the welcome screen, so
-           the in-game HUD doesn't look like a leftover browser <select>. */
+
         #ui-container {
             position: fixed;
             top: 20px;
@@ -698,10 +675,6 @@
 </div>
 
     <script>
-        // Drives the welcome screen's planet cards. Deliberately reuses the
-        // SAME #planet-select that Physics.js already listens to (for live,
-        // in-game planet switching) instead of creating a second one - the
-        // cards below are just a nicer front-end for that one select.
         (function () {
             document.body.classList.add('wv-lock');
 
@@ -712,9 +685,7 @@
             const pointerHint = document.getElementById('wv-pointer-hint');
             const uiOrb = document.getElementById('ui-orb');
 
-            // Same palette as the welcome cards' --wv-card-color, kept here too so
-            // the in-game HUD's color dot matches whichever planet is picked,
-            // including if it's changed later via #ui-container mid-mission.
+
             const planetColors = {
                 mercury: '#f0dfae', venus: '#c77b3d', earth: '#3e76b0',
                 moon: '#c9cdd6', mars: '#b5533c', jupiter: '#d9a15b',
@@ -740,9 +711,7 @@
                 card.addEventListener('click', () => selectPlanet(card));
             });
 
-            // Keep the HUD's color dot in sync with the select, whether it changes
-            // because Launch Mission was pressed or because the player picked a new
-            // planet later from #ui-container mid-game.
+            // Keep the HUD's color dot in sync with the selected planet
             if (select && uiOrb) {
                 select.addEventListener('change', (e) => {
                     applyAccent(planetColors[e.target.value] || planetColors.earth);

@@ -10,7 +10,6 @@ export class CameraManager {
         this.fpOffset = new THREE.Vector3(0, 0.5, -0.5);
 
         // Third Person: behind (+Z) and above (+Y)
-        // We look down towards the character
         this.tpOffset = new THREE.Vector3(0, 2.5, 5.5);
     }
 
