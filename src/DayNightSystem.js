@@ -30,102 +30,100 @@ export class DayNightSystem {
         this.updateTheme(0xffffff, 0.6, 'earth'); 
     }
 
-   
+    createRealisticSun() {
+        this.sunGroup = new THREE.Group();
+        this.scene.add(this.sunGroup);
 
-createRealisticSun() {
-    this.sunGroup = new THREE.Group();
-    this.scene.add(this.sunGroup);
+        // CORE SUN SPHERE (The bright incandescent plasma center)
+        const coreGeom = new THREE.SphereGeometry(3.5, 32, 32);
+        this.coreMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0xffffff,
+            fog: false // Prevents the core sphere from turning grey/black in dense fog
+        });
+        this.sunCore = new THREE.Mesh(coreGeom, this.coreMaterial);
+        this.sunGroup.add(this.sunCore);
 
-    // 1. CORE SUN SPHERE (The bright incandescent plasma center)
-    const coreGeom = new THREE.SphereGeometry(3.5, 32, 32);
-    this.coreMaterial = new THREE.MeshBasicMaterial({ 
-        color: 0xffffff,
-        fog: false // FIX: Prevents the core sphere from turning grey/black in dense fog
-    });
-    this.sunCore = new THREE.Mesh(coreGeom, this.coreMaterial);
-    this.sunGroup.add(this.sunCore);
-
-    // 2. PROCEDURAL HIGH-DEFINITION CHROMOSPHERE CORONA
-    const coronaCanvas = document.createElement('canvas');
-    coronaCanvas.width = 512; 
-    coronaCanvas.height = 512;
-    const ctxCorona = coronaCanvas.getContext('2d');
-    
-    ctxCorona.clearRect(0, 0, 512, 512);
-    
-    const coronaGrad = ctxCorona.createRadialGradient(256, 256, 10, 256, 256, 256);
-    coronaGrad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');     
-    coronaGrad.addColorStop(0.1, 'rgba(255, 255, 200, 0.95)');   
-    coronaGrad.addColorStop(0.25, 'rgba(255, 180, 50, 0.7)');    
-    coronaGrad.addColorStop(0.5, 'rgba(255, 110, 20, 0.25)');    
-    coronaGrad.addColorStop(0.8, 'rgba(230, 50, 10, 0.05)');     
-    coronaGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');            
-    
-    ctxCorona.fillStyle = coronaGrad; 
-    ctxCorona.fillRect(0, 0, 512, 512);
-
-    const coronaTexture = new THREE.CanvasTexture(coronaCanvas);
-    coronaTexture.premultiplyAlpha = true;
-
-    this.coronaMaterial = new THREE.MeshBasicMaterial({
-        map: coronaTexture, 
-        blending: THREE.AdditiveBlending, 
-        transparent: true, 
-        depthWrite: false,
-        fog: false //Forces the sun glow to bypass Earth's atmospheric fog math!
-    });
-    this.sunCorona = new THREE.Mesh(new THREE.PlaneGeometry(35, 35), this.coronaMaterial);
-    this.sunCorona.position.z = -0.1;
-    this.sunGroup.add(this.sunCorona);
-
-    // 3. ANAMORPHIC PHOTOREALISTIC LENS FLARES & SOLAR RAYS
-    const flareCanvas = document.createElement('canvas');
-    flareCanvas.width = 512; 
-    flareCanvas.height = 512;
-    const ctxFlare = flareCanvas.getContext('2d');
-    
-    ctxFlare.clearRect(0, 0, 512, 512);
-    
-    const flareGrad = ctxFlare.createRadialGradient(256, 256, 0, 256, 256, 256);
-    flareGrad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
-    flareGrad.addColorStop(0.2, 'rgba(255, 200, 100, 0.12)');
-    flareGrad.addColorStop(0.6, 'rgba(255, 120, 40, 0.02)');
-    flareGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
-    ctxFlare.fillStyle = flareGrad; 
-    ctxFlare.fillRect(0, 0, 512, 512);
-
-    const rayCount = 12;
-    for (let i = 0; i < rayCount; i++) {
-        const angle = (i * Math.PI) / (rayCount / 2);
-        const rayLength = 180 + Math.sin(i * 3) * 60; 
-        const rayThickness = (i % 2 === 0) ? 3 : 1; 
+        // PROCEDURAL HIGH-DEFINITION CHROMOSPHERE CORONA
+        const coronaCanvas = document.createElement('canvas');
+        coronaCanvas.width = 512; 
+        coronaCanvas.height = 512;
+        const ctxCorona = coronaCanvas.getContext('2d');
         
-        ctxFlare.strokeStyle = (i % 2 === 0) ? 'rgba(255, 235, 180, 0.04)' : 'rgba(255, 160, 80, 0.02)';
-        ctxFlare.lineWidth = rayThickness;
+        ctxCorona.clearRect(0, 0, 512, 512);
         
-        ctxFlare.beginPath(); 
-        ctxFlare.moveTo(256, 256);
-        ctxFlare.lineTo(256 + Math.cos(angle) * 120, 256 + Math.sin(angle) * 120); 
-        ctxFlare.stroke();
+        const coronaGrad = ctxCorona.createRadialGradient(256, 256, 10, 256, 256, 256);
+        coronaGrad.addColorStop(0, 'rgba(255, 255, 255, 1.0)');     
+        coronaGrad.addColorStop(0.1, 'rgba(255, 255, 200, 0.95)');   
+        coronaGrad.addColorStop(0.25, 'rgba(255, 180, 50, 0.7)');    
+        coronaGrad.addColorStop(0.5, 'rgba(255, 110, 20, 0.25)');    
+        coronaGrad.addColorStop(0.8, 'rgba(230, 50, 10, 0.05)');     
+        coronaGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');            
+        
+        ctxCorona.fillStyle = coronaGrad; 
+        ctxCorona.fillRect(0, 0, 512, 512);
+
+        const coronaTexture = new THREE.CanvasTexture(coronaCanvas);
+        coronaTexture.premultiplyAlpha = true;
+
+        this.coronaMaterial = new THREE.MeshBasicMaterial({
+            map: coronaTexture, 
+            blending: THREE.AdditiveBlending, 
+            transparent: true, 
+            depthWrite: false,
+            fog: false //Forces the sun glow to bypass Earth's atmospheric fog math!
+        });
+        this.sunCorona = new THREE.Mesh(new THREE.PlaneGeometry(35, 35), this.coronaMaterial);
+        this.sunCorona.position.z = -0.1;
+        this.sunGroup.add(this.sunCorona);
+
+        // ANAMORPHIC PHOTOREALISTIC LENS FLARES & SOLAR RAYS
+        const flareCanvas = document.createElement('canvas');
+        flareCanvas.width = 512; 
+        flareCanvas.height = 512;
+        const ctxFlare = flareCanvas.getContext('2d');
+        
+        ctxFlare.clearRect(0, 0, 512, 512);
+        
+        const flareGrad = ctxFlare.createRadialGradient(256, 256, 0, 256, 256, 256);
+        flareGrad.addColorStop(0, 'rgba(255, 255, 255, 0.45)');
+        flareGrad.addColorStop(0.2, 'rgba(255, 200, 100, 0.12)');
+        flareGrad.addColorStop(0.6, 'rgba(255, 120, 40, 0.02)');
+        flareGrad.addColorStop(1, 'rgba(0, 0, 0, 0.0)');
+        ctxFlare.fillStyle = flareGrad; 
+        ctxFlare.fillRect(0, 0, 512, 512);
+
+        const rayCount = 12;
+        for (let i = 0; i < rayCount; i++) {
+            const angle = (i * Math.PI) / (rayCount / 2);
+            const rayLength = 180 + Math.sin(i * 3) * 60; 
+            const rayThickness = (i % 2 === 0) ? 3 : 1; 
+            
+            ctxFlare.strokeStyle = (i % 2 === 0) ? 'rgba(255, 235, 180, 0.04)' : 'rgba(255, 160, 80, 0.02)';
+            ctxFlare.lineWidth = rayThickness;
+            
+            ctxFlare.beginPath(); 
+            ctxFlare.moveTo(256, 256);
+            ctxFlare.lineTo(256 + Math.cos(angle) * 120, 256 + Math.sin(angle) * 120); 
+            ctxFlare.stroke();
+        }
+
+        const flareTexture = new THREE.CanvasTexture(flareCanvas);
+        flareTexture.premultiplyAlpha = true;
+
+        this.flareMaterial = new THREE.MeshBasicMaterial({
+            map: flareTexture, 
+            blending: THREE.AdditiveBlending, 
+            transparent: true, 
+            depthWrite: false,
+            fog: false //Forces lens rays to render perfectly on top of atmospheric scattering
+        });
+        this.sunFlare = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), this.flareMaterial);
+        this.sunFlare.position.z = -0.2;
+        this.sunGroup.add(this.sunFlare);
     }
 
-    const flareTexture = new THREE.CanvasTexture(flareCanvas);
-    flareTexture.premultiplyAlpha = true;
-
-    this.flareMaterial = new THREE.MeshBasicMaterial({
-        map: flareTexture, 
-        blending: THREE.AdditiveBlending, 
-        transparent: true, 
-        depthWrite: false,
-        fog: false //Forces lens rays to render perfectly on top of atmospheric scattering
-    });
-    this.sunFlare = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), this.flareMaterial);
-    this.sunFlare.position.z = -0.2;
-    this.sunGroup.add(this.sunFlare);
-}
-
     createSecondaryBody() {
-        // Reduced the geometry size slightly (from 5.0 to 3.5) so it looks naturally distant in deep space
+        // Reduced the geometry size slightly so it looks naturally distant in deep space
         const geom = new THREE.SphereGeometry(3.5, 32, 32); 
         this.secondaryMaterial = new THREE.MeshStandardMaterial({ roughness: 0.8, metalness: 0.1 });
         this.secondaryMesh = new THREE.Mesh(geom, this.secondaryMaterial);
@@ -161,7 +159,7 @@ createRealisticSun() {
 
         //  Dedicated light for the secondary body (Moon seen from Earth, Earth seen
         // from the Moon, etc). Lives on layer 1 ONLY, so it exclusively lights
-        // `secondaryMesh` and never the ground/player. .
+        // `secondaryMesh` and never the ground/player.
         this.secondaryLight = new THREE.DirectionalLight(0xffffff, 1.0);
         this.secondaryLight.castShadow = false;
         this.secondaryLight.layers.set(1);
@@ -213,107 +211,108 @@ createRealisticSun() {
     }
 
     update(deltaTime, playerPosition, camera) {
-    this.sunOrbitTime += deltaTime * 0.05;
-    
-    // Pushed the celestial distance to 450 meters so objects stay strictly in the backdrop sky
-    const orbitRadius = 450; 
-    
-    const sunX = Math.cos(this.sunOrbitTime) * orbitRadius;
-    // Offset Y translation + 80 ensures the celestial bodies never dip beneath the flat ground plane grid
-    const sunY = Math.sin(this.sunOrbitTime) * (orbitRadius - 100) + 80; 
-    const sunZ = Math.sin(this.sunOrbitTime * 0.5) * 100;    
+        this.sunOrbitTime += deltaTime * 0.05;
+        
+        // Pushed the celestial distance to 450 meters so objects stay strictly in the backdrop sky
+        const orbitRadius = 450; 
+        
+        const sunX = Math.cos(this.sunOrbitTime) * orbitRadius;
+        // Offset Y translation + 80 ensures the celestial bodies never dip beneath the flat ground plane grid
+        const sunY = Math.sin(this.sunOrbitTime) * (orbitRadius - 100) + 80; 
+        const sunZ = Math.sin(this.sunOrbitTime * 0.5) * 100;    
 
-    this.sunGroup.position.set(playerPosition.x + sunX, playerPosition.y + sunY, playerPosition.z + sunZ);
+        this.sunGroup.position.set(playerPosition.x + sunX, playerPosition.y + sunY, playerPosition.z + sunZ);
 
-    // Identify the active planet safely (fallback to earth if undefined)
-    const currentPlanet = this.activePlanet || 'earth';
+        // Identify the active planet safely (fallback to earth if undefined)
+        const currentPlanet = this.activePlanet || 'earth';
 
-    if (this.secondaryMesh.visible) {
-        const cfg = this.planetaryData[currentPlanet] || this.planetaryData.earth;
-        let secX = 0, secY = 0, secZ = 0;
+        if (this.secondaryMesh.visible) {
+            const cfg = this.planetaryData[currentPlanet] || this.planetaryData.earth;
+            let secX = 0, secY = 0, secZ = 0;
 
-        if (cfg.orbitType === 'fixed') {
-            // Earth seen from the Moon: locked high up safely in the stars backdrop
-            secX = 150;
-            secY = 300;
-            secZ = -250;
-        } else {
-            // 'synced': shares the sun's own orbit clock with a phase offset, so the body
-            // genuinely rises and sets instead of looping artificially clamped near the top.
-            const angle = this.sunOrbitTime * (cfg.speedMult || 1.0) + (cfg.secondaryPhase || Math.PI);
-            secX = Math.cos(angle) * (orbitRadius - 50);
-            secY = Math.sin(angle) * (orbitRadius - 100) + 80;
-            secZ = Math.sin(angle * 0.5) * 100;
-        }
+            if (cfg.orbitType === 'fixed') {
+                // Earth seen from the Moon: locked high up safely in the stars backdrop
+                secX = 150;
+                secY = 300;
+                secZ = -250;
+            } else {
+                // 'synced': shares the sun's own orbit clock with a phase offset, so the body
+                // genuinely rises and sets instead of looping artificially clamped near the top.
+                const angle = this.sunOrbitTime * (cfg.speedMult || 1.0) + (cfg.secondaryPhase || Math.PI);
+                secX = Math.cos(angle) * (orbitRadius - 50);
+                secY = Math.sin(angle) * (orbitRadius - 100) + 80;
+                secZ = Math.sin(angle * 0.5) * 100;
+            }
 
-        this.secondaryMesh.position.set(playerPosition.x + secX, playerPosition.y + secY, playerPosition.z + secZ);
-        this.secondaryMesh.rotation.y += deltaTime * 0.02;
+            this.secondaryMesh.position.set(playerPosition.x + secX, playerPosition.y + secY, playerPosition.z + secZ);
+            this.secondaryMesh.rotation.y += deltaTime * 0.02;
 
-        // Feed the dedicated secondary-body light  This is what makes
-        // the Moon/Earth stay realistically visible and lit at any time of day.
-        this.secondaryLight.position.copy(this.sunGroup.position);
-        this.secondaryLight.target.position.copy(this.secondaryMesh.position);
-        this.secondaryLight.target.updateMatrixWorld();
-        this.secondaryLight.intensity = this.currentSunIntensity;
+            // Feed the dedicated secondary-body light  This is what makes
+            // the Moon/Earth stay realistically visible and lit at any time of day.
+            this.secondaryLight.position.copy(this.sunGroup.position);
+            this.secondaryLight.target.position.copy(this.secondaryMesh.position);
+            this.secondaryLight.target.updateMatrixWorld();
+            this.secondaryLight.intensity = this.currentSunIntensity;
 
-        // --- MOONLIGHT / NIGHT DIRECTIONAL LIGHT LOGIC ---
-        // We only want directional moonlight on Earth. For other planets, we strictly avoid any directional night beam.
-        if (currentPlanet === 'earth' && cfg.secondary === 'moon') {
-            this.moonLight.position.copy(this.secondaryMesh.position);
-            this.moonLight.target.position.copy(playerPosition);
-            this.moonLight.target.updateMatrixWorld();
-            const moonFactor = THREE.MathUtils.clamp(secY / 200, 0, 1);
-            this.moonLight.intensity = moonFactor * 0.25;
+            // Moonlight/Night directional light logic
+            // We only want directional moonlight on Earth. For other planets, we strictly avoid any directional night beam.
+            if (currentPlanet === 'earth' && cfg.secondary === 'moon') {
+                this.moonLight.position.copy(this.secondaryMesh.position);
+                this.moonLight.target.position.copy(playerPosition);
+                this.moonLight.target.updateMatrixWorld();
+                const moonFactor = THREE.MathUtils.clamp(secY / 200, 0, 1);
+                this.moonLight.intensity = moonFactor * 0.25;
+            } else {
+                this.moonLight.intensity = 0.0;
+            }
         } else {
             this.moonLight.intensity = 0.0;
         }
-    } else {
-        this.moonLight.intensity = 0.0;
-    }
 
-    if (camera) {
-        this.sunCorona.lookAt(camera.position);
-        this.sunFlare.lookAt(camera.position);
-        this.sunFlare.rotation.z = this.sunOrbitTime * 0.2;
+        if (camera) {
+            this.sunCorona.lookAt(camera.position);
+            this.sunFlare.lookAt(camera.position);
+            this.sunFlare.rotation.z = this.sunOrbitTime * 0.2;
 
-        // The secondary body lives on layer 1 . The
-        // camera must explicitly enable that layer or it will simply never render it.
-        camera.layers.enable(1);
-    }
+            // The secondary body lives on layer 1 . The
+            // camera must explicitly enable that layer or it will simply never render it.
+            camera.layers.enable(1);
+        }
 
-    this.sunLight.position.copy(this.sunGroup.position);
-    this.sunLight.target.position.copy(playerPosition);
-    this.sunLight.target.updateMatrixWorld();
+        this.sunLight.position.copy(this.sunGroup.position);
+        this.sunLight.target.position.copy(playerPosition);
+        this.sunLight.target.updateMatrixWorld();
 
-    // Zenith boost: extra brightness the higher the sun climbs, on top of the base intensity
-    const zenithFactor = THREE.MathUtils.clamp(sunY / 300, 0, 1);
-    const zenithBoost = 1.0 + zenithFactor * 0.35;
+        // Zenith boost: extra brightness the higher the sun climbs, on top of the base intensity
+        const zenithFactor = THREE.MathUtils.clamp(sunY / 300, 0, 1);
+        const zenithBoost = 1.0 + zenithFactor * 0.35;
 
-    if (sunY < 40) {
-        const factor = Math.max(0, (sunY - 10) / 30);
-        this.sunLight.intensity = this.currentSunIntensity * factor;
-        this.coronaMaterial.opacity = factor;
-        this.flareMaterial.opacity = factor;
-    } else {
-        this.sunLight.intensity = this.currentSunIntensity * zenithBoost;
-        this.coronaMaterial.opacity = 1.0;
-        this.flareMaterial.opacity = 1.0;
-    }
-
-    // --- AMBIENT LIGHTING SYSTEM ---
-    if (currentPlanet === 'earth') {
-        // Earth behaves dynamically: dark ambient light during night time
-        const ambientFactor = THREE.MathUtils.clamp((sunY - 10) / 60, 0.08, 1.0);
-        this.ambientLight.intensity = 0.15 * ambientFactor * zenithBoost;
-    } else {
-        // Other planets: when the sun goes down (sunY < 0), we inject a steady, soft ambient light baseline.
-        // This keeps the landscape visible everywhere without casting any specific moon beams or harsh shadows.
-        if (sunY < 0) {
-            this.ambientLight.intensity = 0.25; // Soft global visibility baseline at night
+        if (sunY < 40) {
+            const factor = Math.max(0, (sunY - 10) / 30);
+            this.sunLight.intensity = this.currentSunIntensity * factor;
+            this.coronaMaterial.opacity = factor;
+            this.flareMaterial.opacity = factor;
         } else {
-            // Smoothly transitions into daylight ambient brightness as the sun goes up
-            const sunFactor = THREE.MathUtils.clamp(sunY / 60, 0, 1);
-            this.ambientLight.intensity = THREE.MathUtils.lerp(0.25, 0.45, sunFactor) * zenithBoost;
+            this.sunLight.intensity = this.currentSunIntensity * zenithBoost;
+            this.coronaMaterial.opacity = 1.0;
+            this.flareMaterial.opacity = 1.0;
+        }
+
+        // Ambient lighting system 
+        if (currentPlanet === 'earth') {
+            // Earth behaves dynamically: dark ambient light during night time
+            const ambientFactor = THREE.MathUtils.clamp((sunY - 10) / 60, 0.08, 1.0);
+            this.ambientLight.intensity = 0.15 * ambientFactor * zenithBoost;
+        } else {
+            // Other planets: when the sun goes down (sunY < 0), we inject a steady, soft ambient light baseline.
+            // This keeps the landscape visible everywhere without casting any specific moon beams or harsh shadows.
+            if (sunY < 0) {
+                this.ambientLight.intensity = 0.25; // Soft global visibility baseline at night
+            } else {
+                // Smoothly transitions into daylight ambient brightness as the sun goes up
+                const sunFactor = THREE.MathUtils.clamp(sunY / 60, 0, 1);
+                this.ambientLight.intensity = THREE.MathUtils.lerp(0.25, 0.45, sunFactor) * zenithBoost;
+            }
         }
     }
-    }}
+}
