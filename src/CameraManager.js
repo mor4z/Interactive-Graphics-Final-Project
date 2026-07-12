@@ -43,8 +43,7 @@ export class CameraManager {
     // collision only against the camera's center point (a single ray) ignores the
     // fact that the camera actually "sees" a rectangle at the near plane - so an
     // obstacle edge could clip into that rectangle's corners even when the center
-    // ray doesn't hit anything, causing the visible edge mismatch/flicker you're
-    // seeing near obstacle corners.
+    // ray doesn't hit anything, causing visible edge mismatch/flicker near corners
     getNearPlaneCorners(camPosition, yaw, pitch) {
         const near = this.camera.near;
         const fov = THREE.MathUtils.degToRad(this.camera.fov);
