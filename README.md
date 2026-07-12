@@ -10,9 +10,9 @@ Suit up. Pick your world. Feel the gravity change under your feet.
 
 ## Overview
 
-Space Valley is a browser-based 3D exploration game built with **Three.js** and vanilla JavaScript. You play an astronaut dropped onto a procedurally lit alien terrain, free to walk, jump, look around, and throw objects across a landscape scattered with obstacles of every size.
+Space Valley is a browser-based 3D exploration game built with **Three.js** and JavaScript. You play an astronaut dropped onto a celestial body of the solar system, feel free to walk, jump, look around, and throw objects across a landscape scattered with obstacles of every size.
 
-What makes each visit different is the planet you choose. Every world in the game runs on its own **real astronomical gravity value**, which doesn't just change a number in a config file — it visibly reshapes how your character moves. Jump height, stride length, walking cadence, and even how "floaty" or "heavy" each step feels are all derived live from the current planet's gravity, so Mercury never feels like Jupiter, and the Moon never feels like Earth.
+What makes each visit different is the planet you choose. Every world in the game runs on its own **real astronomical gravity value**, that visibly reshapes how the character moves. Jump height, stride length, walking cadence, and even how "floaty" or "heavy" each step feels are all derived live from the current planet's gravity, so Mercury never feels like Jupiter, and the Moon never feels like Earth.
 
 A dynamic sun tracks across the sky, casting real-time shadows that shift in length and softness as it rises and sets, while a procedural starfield and a planet-specific atmosphere color the horizon behind you.
 
@@ -49,7 +49,7 @@ A dynamic sun tracks across the sky, casting real-time shadows that shift in len
 
 **Core engine**
 - [Three.js](https://threejs.org) — WebGL 3D rendering, scene graph, lights, shadow mapping, raycasting, geometry
-- Vanilla JavaScript (ES6 Modules) — no framework, no bundler required, just clean modular game logic
+- JavaScript (ES6 Modules) — no framework, no bundler required, just clean modular game logic
 
 **Rendering & lighting**
 - `THREE.DirectionalLight` with shadow mapping (shadow-mapped sun, tuned bias / normalBias for crisp, non-detached shadows)
