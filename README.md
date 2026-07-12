@@ -4,7 +4,7 @@
 
 Suit up. Pick your world. Feel the gravity change under your feet.
 
-> **▶ Play it now:** [github link]
+> **▶ Play it now:** [\[github link\]](https://sapienzainteractivegraphicscourse.github.io/final-project-space-valley/)
 
 ---
 
